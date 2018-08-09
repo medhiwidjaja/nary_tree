@@ -24,23 +24,22 @@ defmodule NaryTree do
     %NaryTree{func.(node) | children: updated_children}
   end
 
-  def to_list(%NaryTree{} = tree), do: to_list(tree, %{})
-  defp to_list(%NaryTree{children: %{}} = node, _acc), do: [node.id]
-  defp to_list(%NaryTree{children: children} = tree, acc) do
-    reduced_children = for child <- children do
-      to_list(child, acc)
-    end
-    List.flatten([tree | reduced_children])
+  def flatten(%NaryTree{children: children} = node) when children == %{}, do: [node]
+  def flatten(%NaryTree{children: children} = tree) do
+    node = %NaryTree{ tree | children: %{}}
+    List.flatten [node | Enum.map(Map.values(children), fn(child) -> flatten(child) end)]
   end
 
-  # def print_tree(%NaryTree{id: id, content: content, parent: parent}) when parent == :empty do
-  #   IO.puts "#{id} - #{content.name}"
-  # end
+  # TODO : there's a bug in here
   def print_tree(%NaryTree{children: children} = node) when children == %{} do
-    IO.puts "#{node.id} - #{node.content.name}"
+    IO.puts "  #{node.id} - #{node.content.name}"
   end
-  def print_tree(%NaryTree{children: children}) do
-    Enum.each Map.values(children), &print_tree(&1)
+  def print_tree(%NaryTree{id: id, content: content, children: children}) do
+    IO.puts "#{id} - #{content.name}"
+    Enum.each Map.values(children), fn(child) ->
+      IO.write "  "
+      print_tree(child)
+    end
   end
 
   defimpl Enumerable do
@@ -77,3 +76,17 @@ defmodule NaryTree do
   end
 end
 
+# root = NT.new 0, %{w: 0.45, name: "Goal"}
+# c1 = NT.new 1, %{w: 0.33, name: "Cost"}
+# c2 = NT.new 2, %{w: 0.67, name: "Benefits"}
+# a1 = NT.new 3, %{w: 0.1, name: "Alt 1"}
+# a2 = NT.new 4, %{w: 0.4, name: "Alt 2"}
+# a3 = NT.new 5, %{w: 0.5, name: "Alt 3"}
+# c11 = NT.new 6, %{w: 0.2, name: "Speed"}
+# c12 = NT.new 7, %{w: 0.3, name: "Image"}
+# c13 = NT.new 8, %{w: 0.5, name: "Features"}
+# c1 = c1 |> NT.add_child(a1) |> NT.add_child(a2) |> NT.add_child(a3)
+# c2.children |> Map.put(c11.id, c11) |> Map.put(c12.id, c12) |> Map.put(c13.id, c13)
+
+# tree = root |> NT.add_child(c1 |> NT.add_child(a1) |> NT.add_child(a2) |> NT.add_child(a3)) |>
+#   NT.add_child(c2 |> NT.add_child(c11) |> NT.add_child(c12) |> NT.add_child(c13))
