@@ -50,15 +50,20 @@ defmodule NaryTree do
       Enum.sum(Enum.map(Map.values(children), &count(&1, acc))) + 1
     end
 
-    def member?(%NaryTree{id: id}, id), do: IO.inspect("Yes, #{id}"); {:ok, true}
-    def member?(%NaryTree{children: children, id: id}, elem_id)
-        when children == %{}
-        and id != elem_id do
-      IO.inspect("No, #{id}");
+    def member?(%NaryTree{id: id}, id), do: {:ok, true}
+    def member?(%NaryTree{children: children}, _elem_id) when children == %{} do
       {:ok, false}
     end
-    def member?(%NaryTree{children: children}, elem_id) do
-      Enum.any?(Map.values(children), fn(child) -> IO.inspect("Wait, #{child.id}"); Enum.member? child, elem_id end)
+    def member?(%NaryTree{id: id, children: children}, elem_id)
+        when children != %{} and id == elem_id do
+      {:ok, true}
+    end
+    def member?(%NaryTree{id: id, children: children}, elem_id) when children != %{} do
+      if Enum.any?(Map.values(children), fn(child) -> Enum.member? child, elem_id end) do
+        {:ok, true}
+      else
+        {:ok, false}
+      end
     end
 
     def reduce(tree, acc, f) do
