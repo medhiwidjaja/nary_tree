@@ -33,9 +33,15 @@ defmodule NaryTree do
     List.flatten([tree | reduced_children])
   end
 
-  # def print_tree(%NaryTree{} = tree) do
-
+  # def print_tree(%NaryTree{id: id, content: content, parent: parent}) when parent == :empty do
+  #   IO.puts "#{id} - #{content.name}"
   # end
+  def print_tree(%NaryTree{children: children} = node) when children == %{} do
+    IO.puts "#{node.id} - #{node.content.name}"
+  end
+  def print_tree(%NaryTree{children: children}) do
+    Enum.each Map.values(children), &print_tree(&1)
+  end
 
   defimpl Enumerable do
     def count(%NaryTree{} = tree), do: {:ok, count(tree, 0)}
