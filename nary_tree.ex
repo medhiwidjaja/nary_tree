@@ -25,7 +25,7 @@ defmodule NaryTree do
   end
 
   def to_list(%NaryTree{} = tree), do: to_list(tree, %{})
-  defp to_list(%NaryTree{children: %{}} = node, _acc), do: [node]
+  defp to_list(%NaryTree{children: %{}} = node, _acc), do: [node.id]
   defp to_list(%NaryTree{children: children} = tree, acc) do
     reduced_children = for child <- children do
       to_list(child, acc)
@@ -40,15 +40,20 @@ defmodule NaryTree do
   defimpl Enumerable do
     def count(%NaryTree{} = tree), do: {:ok, count(tree, 0)}
 
-    defp count(%NaryTree{children: %{}}, acc), do: acc + 1 # This counts the leaves
+    defp count(%NaryTree{children: children}, acc) when children == %{}, do: acc + 1 # This counts the leaves
     defp count(%NaryTree{children: children}, acc) do
-      Enum.sum(Enum.map(children, &count(&1, acc))) + 1
+      Enum.sum(Enum.map(Map.values(children), &count(&1, acc))) + 1
     end
 
-    def member?(%NaryTree{id: id}, id), do: {:ok, true}
-    def member?(%NaryTree{id: id, children: %{}}, elem_id) when id != elem_id, do: {:ok, false}
+    def member?(%NaryTree{id: id}, id), do: IO.inspect("Yes, #{id}"); {:ok, true}
+    def member?(%NaryTree{children: children, id: id}, elem_id)
+        when children == %{}
+        and id != elem_id do
+      IO.inspect("No, #{id}");
+      {:ok, false}
+    end
     def member?(%NaryTree{children: children}, elem_id) do
-      {:ok, Map.has_key?(children, elem_id)}
+      Enum.any?(Map.values(children), fn(child) -> IO.inspect("Wait, #{child.id}"); Enum.member? child, elem_id end)
     end
 
     def reduce(tree, acc, f) do
@@ -59,6 +64,10 @@ defmodule NaryTree do
     defp reduce_tree(tree, {:suspend, acc}, f), do: {:suspended, acc, &reduce_tree(tree, &1, f)}
     defp reduce_tree(%{}, {:cont, acc}, _f), do: {:done, acc}
     defp reduce_tree([h | t], {:cont, acc}, f), do: reduce_tree(t, f.(h, acc), f)
+
+    def slice(_tree) do
+      {:error, __MODULE__}        # let the default action take over
+    end
   end
 end
 
