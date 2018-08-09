@@ -20,14 +20,15 @@ defmodule NaryTree do
     %NaryTree{func.(node) | children: %{}}
   end
   def map(%NaryTree{children: children} = node, func) do
-    updated_children = Enum.reduce children, children, fn(child, acc) -> %{acc | child.k => func.(child)} end
+    updated_children = Enum.reduce children, children,
+      fn({id, child}, acc) -> %{acc | id => map(func.(child), func)} end
     %NaryTree{func.(node) | children: updated_children}
   end
 
   def flatten(%NaryTree{children: children} = node) when children == %{}, do: [node]
   def flatten(%NaryTree{children: children} = tree) do
     node = %NaryTree{ tree | children: %{}}
-    List.flatten [node | Enum.map(Map.values(children), fn(child) -> flatten(child) end)]
+    List.flatten [node | Enum.map(children, fn({_, child}) -> flatten(child) end)]
   end
 
   # TODO : there's a bug in here
@@ -36,7 +37,7 @@ defmodule NaryTree do
   end
   def print_tree(%NaryTree{id: id, content: content, children: children}) do
     IO.puts "#{id} - #{content.name}"
-    Enum.each Map.values(children), fn(child) ->
+    Enum.each children, fn({_, child}) ->
       IO.write "  "
       print_tree(child)
     end
@@ -58,8 +59,8 @@ defmodule NaryTree do
         when children != %{} and id == elem_id do
       {:ok, true}
     end
-    def member?(%NaryTree{id: id, children: children}, elem_id) when children != %{} do
-      if Enum.any?(Map.values(children), fn(child) -> Enum.member? child, elem_id end) do
+    def member?(%NaryTree{children: children}, elem_id) when children != %{} do
+      if Enum.any?(children, fn({_, child}) -> Enum.member? child, elem_id end) do
         {:ok, true}
       else
         {:ok, false}
@@ -81,6 +82,7 @@ defmodule NaryTree do
   end
 end
 
+# alias NaryTree, as: NT
 # root = NT.new 0, %{w: 0.45, name: "Goal"}
 # c1 = NT.new 1, %{w: 0.33, name: "Cost"}
 # c2 = NT.new 2, %{w: 0.67, name: "Benefits"}
