@@ -29,6 +29,7 @@ defmodule NaryTree do
   def flatten(%NaryTree{children: children} = tree) do
     node = %NaryTree{ tree | children: %{}}
     List.flatten [node | Enum.map(children, fn({_, child}) -> flatten(child) end)]
+    |> :lists.reverse()
   end
 
   # TODO : there's a bug in here
@@ -68,12 +69,12 @@ defmodule NaryTree do
     end
 
     def reduce(tree, acc, f) do
-      reduce_tree(NaryTree.to_list(tree), acc, f)
+      reduce_tree(NaryTree.flatten(tree), acc, f)
     end
 
     defp reduce_tree(_, {:halt, acc}, _f), do: {:halted, acc}
     defp reduce_tree(tree, {:suspend, acc}, f), do: {:suspended, acc, &reduce_tree(tree, &1, f)}
-    defp reduce_tree(%{}, {:cont, acc}, _f), do: {:done, acc}
+    defp reduce_tree([], {:cont, acc}, _f), do: {:done, acc}
     defp reduce_tree([h | t], {:cont, acc}, f), do: reduce_tree(t, f.(h, acc), f)
 
     def slice(_tree) do
