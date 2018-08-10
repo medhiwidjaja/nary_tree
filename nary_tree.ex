@@ -16,14 +16,14 @@ defmodule NaryTree do
 
   def is_leaf?(node), do: node.children == %{}
 
-  def map(%NaryTree{id: id, parent: parent, content: content, children: children}, func)
+  def map(%NaryTree{content: content, children: children} = node, func)
       when children == %{} do
-    %NaryTree{id: id, parent: parent, content: func.(content), children: children}
+    %NaryTree{node | content: func.(content)}
   end
-  def map(%NaryTree{id: id, parent: parent, content: content, children: children}, func) do
+  def map(%NaryTree{content: content, children: children} = node, func) do
     updated_children = Enum.reduce children, children,
       fn({id, child}, acc) -> %{acc | id => map(child, func)} end
-    %NaryTree{id: id, parent: parent, content: func.(content), children: updated_children}
+    %NaryTree{node | content: func.(content), children: updated_children}
   end
 
   def flatten(%NaryTree{children: children} = node) when children == %{}, do: [node]
@@ -44,6 +44,9 @@ defmodule NaryTree do
       print_tree(child)
     end
   end
+
+  defp is_nary_tree?(%NaryTree{}), do: true
+  defp is_nary_tree?(_), do: false
 
   defimpl Enumerable do
     def count(%NaryTree{} = tree), do: {:ok, count(tree, 0)}
