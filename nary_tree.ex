@@ -16,13 +16,14 @@ defmodule NaryTree do
 
   def is_leaf?(node), do: node.children == %{}
 
-  def map(%NaryTree{children: children} = node, func) when children == %{} do
-    %NaryTree{func.(node) | children: %{}}
+  def map(%NaryTree{id: id, parent: parent, content: content, children: children}, func)
+      when children == %{} do
+    %NaryTree{id: id, parent: parent, content: func.(content), children: children}
   end
-  def map(%NaryTree{children: children} = node, func) do
+  def map(%NaryTree{id: id, parent: parent, content: content, children: children}, func) do
     updated_children = Enum.reduce children, children,
-      fn({id, child}, acc) -> %{acc | id => map(func.(child), func)} end
-    %NaryTree{func.(node) | children: updated_children}
+      fn({id, child}, acc) -> %{acc | id => map(child, func)} end
+    %NaryTree{id: id, parent: parent, content: func.(content), children: updated_children}
   end
 
   def flatten(%NaryTree{children: children} = node) when children == %{}, do: [node]
