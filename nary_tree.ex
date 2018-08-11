@@ -16,13 +16,15 @@ defmodule NaryTree do
 
   def is_leaf?(node), do: node.children == %{}
 
-  def map(%NaryTree{content: content, children: children} = node, func)
+  def has_content?(node), do: node.content != nil
+
+  def update_content(%NaryTree{content: content, children: children} = node, func)
       when children == %{} do
     %NaryTree{node | content: func.(content)}
   end
-  def map(%NaryTree{content: content, children: children} = node, func) do
+  def update_content(%NaryTree{content: content, children: children} = node, func) do
     updated_children = Enum.reduce children, children,
-      fn({id, child}, acc) -> %{acc | id => map(child, func)} end
+      fn({id, child}, acc) -> %{acc | id => update_content(child, func)} end
     %NaryTree{node | content: func.(content), children: updated_children}
   end
 
@@ -31,6 +33,22 @@ defmodule NaryTree do
     node = %NaryTree{ tree | children: %{}}
     List.flatten [node | Enum.map(children, fn({_, child}) -> flatten(child) end)]
     |> :lists.reverse()
+  end
+
+  def search(%NaryTree{children: children} = tree, id) when children == %{} do
+    if tree.id == id, do: tree, else: nil
+  end
+  def search(%NaryTree{id: id, children: children} = node, id), do: node
+  def search(%NaryTree{children: children}, id) do
+    if Map.has_key?(children, id) do
+      Map.get(children, id)
+    else
+      Enumerable.reduce(Map.values(children), {:cont, false}, fn child, _ ->
+        found = NaryTree.search(child, id)
+        if found, do: {:halt, found}, else: {:cont, false}
+      end)
+      |> elem(1)
+    end
   end
 
   # TODO : there's a bug in here
