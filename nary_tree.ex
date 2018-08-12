@@ -1,15 +1,11 @@
 defmodule NaryTree do
 
-  # @enforce_keys [:id, :children]
-  defstruct id: :empty, content: :empty, parent: :empty, children: %{}
+  defstruct root: nil, nodes: %{}
 
-  @type t :: %NaryTree{id: any(), content: any(), parent: any(), children: [%NaryTree{}]}
+  alias NaryTree.Node
 
-  def new(), do: %NaryTree{id: :empty, content: :empty, parent: :empty, children: %{}}
-  def new(id, content), do: %NaryTree{id: id, content: content, parent: :empty, children: %{}}
-
-  def add_child(parent, %NaryTree{id: id} = child) do
-    %NaryTree{ parent | children: Map.put(parent.children, id, %NaryTree{child | parent: parent.id}) }
+  def add_child(tree, parent, %__MODULE__{id: id} = child) do
+    %__MODULE__{ parent | children: Map.put(parent.children, id, %__MODULE__{child | parent: parent.id}) }
   end
 
   def is_root?(node), do: node.parent == :empty || node.parent == nil
@@ -18,44 +14,44 @@ defmodule NaryTree do
 
   def has_content?(node), do: node.content != nil
 
-  def update_content(%NaryTree{content: content, children: children} = node, func)
+  def update_content(%__MODULE__{content: content, children: children} = node, func)
       when children == %{} do
-    %NaryTree{node | content: func.(content)}
+    %__MODULE__{node | content: func.(content)}
   end
-  def update_content(%NaryTree{content: content, children: children} = node, func) do
+  def update_content(%__MODULE__{content: content, children: children} = node, func) do
     updated_children = Enum.reduce children, children,
       fn({id, child}, acc) -> %{acc | id => update_content(child, func)} end
-    %NaryTree{node | content: func.(content), children: updated_children}
+    %__MODULE__{node | content: func.(content), children: updated_children}
   end
 
-  def flatten(%NaryTree{children: children} = node) when children == %{}, do: [node]
-  def flatten(%NaryTree{children: children} = tree) do
-    node = %NaryTree{ tree | children: %{}}
+  def flatten(%__MODULE__{children: children} = node) when children == %{}, do: [node]
+  def flatten(%__MODULE__{children: children} = tree) do
+    node = %__MODULE__{ tree | children: %{}}
     List.flatten [node | Enum.map(children, fn({_, child}) -> flatten(child) end)]
     |> :lists.reverse()
   end
 
-  def search(%NaryTree{children: children} = tree, id) when children == %{} do
+  def search(%__MODULE__{children: children} = tree, id) when children == %{} do
     if tree.id == id, do: tree, else: nil
   end
-  def search(%NaryTree{id: id, children: children} = node, id), do: node
-  def search(%NaryTree{children: children}, id) do
+  def search(%__MODULE__{id: id, children: _children} = node, id), do: node
+  def search(%__MODULE__{children: children}, id) do
     if Map.has_key?(children, id) do
       Map.get(children, id)
     else
-      Enumerable.reduce(Map.values(children), {:cont, false}, fn child, _ ->
-        found = NaryTree.search(child, id)
-        if found, do: {:halt, found}, else: {:cont, false}
+      Enumerable.reduce(Map.values(children), {:cont, nil}, fn child, _ ->
+        found = __MODULE__.search(child, id)
+        if found, do: {:halt, found}, else: {:cont, nil}
       end)
       |> elem(1)
     end
   end
 
   # TODO : there's a bug in here
-  def print_tree(%NaryTree{children: children} = node) when children == %{} do
+  def print_tree(%__MODULE__{children: children} = node) when children == %{} do
     IO.puts "  #{node.id} - #{node.content.name}"
   end
-  def print_tree(%NaryTree{id: id, content: content, children: children}) do
+  def print_tree(%__MODULE__{id: id, content: content, children: children}) do
     IO.puts "#{id} - #{content.name}"
     Enum.each children, fn({_, child}) ->
       IO.write "  "
@@ -63,26 +59,39 @@ defmodule NaryTree do
     end
   end
 
-  defp is_nary_tree?(%NaryTree{}), do: true
+  defp is_nary_tree?(%__MODULE__{}), do: true
   defp is_nary_tree?(_), do: false
 
-  defimpl Enumerable do
-    def count(%NaryTree{} = tree), do: {:ok, count(tree, 0)}
+  @behaviour Access
 
-    defp count(%NaryTree{children: children}, acc) when children == %{}, do: acc + 1 # This counts the leaves
-    defp count(%NaryTree{children: children}, acc) do
+  @impl Access
+  @spec fetch(map, key) :: {:ok, value} | :error
+  def fetch(node, key) when is_atom(key), do: if node[key], do: {:ok, node[key]}, else: :error
+  def fetch(tree, id), do: search(tree, id)
+
+  @impl Access
+  def get_and_update(tree, id, func) do
+    fetch(tree, id)
+    |> update_content(func)
+  end
+
+  defimpl Enumerable do
+    def count(%__MODULE__{} = tree), do: {:ok, count(tree, 0)}
+
+    defp count(%__MODULE__{children: children}, acc) when children == %{}, do: acc + 1 # This counts the leaves
+    defp count(%__MODULE__{children: children}, acc) do
       Enum.sum(Enum.map(Map.values(children), &count(&1, acc))) + 1
     end
 
-    def member?(%NaryTree{id: id}, id), do: {:ok, true}
-    def member?(%NaryTree{children: children}, _elem_id) when children == %{} do
+    def member?(%__MODULE__{id: id}, id), do: {:ok, true}
+    def member?(%__MODULE__{children: children}, _elem_id) when children == %{} do
       {:ok, false}
     end
-    def member?(%NaryTree{id: id, children: children}, elem_id)
+    def member?(%__MODULE__{id: id, children: children}, elem_id)
         when children != %{} and id == elem_id do
       {:ok, true}
     end
-    def member?(%NaryTree{children: children}, elem_id) when children != %{} do
+    def member?(%__MODULE__{children: children}, elem_id) when children != %{} do
       if Enum.any?(children, fn({_, child}) -> Enum.member? child, elem_id end) do
         {:ok, true}
       else
@@ -91,7 +100,7 @@ defmodule NaryTree do
     end
 
     def reduce(tree, acc, f) do
-      reduce_tree(NaryTree.flatten(tree), acc, f)
+      reduce_tree(__MODULE__.flatten(tree), acc, f)
     end
 
     defp reduce_tree(_, {:halt, acc}, _f), do: {:halted, acc}
@@ -105,7 +114,7 @@ defmodule NaryTree do
   end
 end
 
-# alias NaryTree, as: NT
+# alias __MODULE__, as: NT
 # root = NT.new 0, %{w: 0.45, name: "Goal"}
 # c1 = NT.new 1, %{w: 0.33, name: "Cost"}
 # c2 = NT.new 2, %{w: 0.67, name: "Benefits"}
