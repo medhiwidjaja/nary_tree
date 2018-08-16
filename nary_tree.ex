@@ -47,7 +47,13 @@ defmodule NaryTree do
 
   @spec update_content(__MODULE__.t(), function()) :: __MODULE__.t()
   def update_content(%__MODULE__{nodes: nodes} = tree, func) do
-    %__MODULE__{tree | nodes: Enum.map(nodes, fn(node) -> %Node{node | content: func.(node.content)} end) }
+    %__MODULE__{tree | nodes: do_update_content(nodes, func)}
+  end
+
+  defp do_update_content(nodes, func) do
+    Enum.reduce(nodes, nodes, fn({id,n},acc) ->
+      Map.put(acc, id, Map.update!(n, :content, func))
+    end)
   end
 
   # def update_content(%__MODULE__{content: content, children: []} = node, func) do
@@ -162,39 +168,46 @@ defmodule NaryTree do
     end
   end
 
-  # defimpl Enumerable do
-  #   def count(%NaryTree{nodes: nodes}), do: {:ok, Map.size(nodes)}
+  defimpl Enumerable do
+    def count(%NaryTree{nodes: nodes}), do: {:ok, Map.size(nodes)}
 
-  #   def member?(%NaryTree{nodes: %{id: id}}, id), do: {:ok, true}
-  #   def member?(_,_), do: {:ok, false}
+    def member?(%NaryTree{nodes: %{id: id}}, id), do: {:ok, true}
+    def member?(_,_), do: {:ok, false}
 
-  #   def reduce(%NaryTree{nodes: nodes}, acc, f) do
-  #     reduce_tree(nodes, acc, f)
-  #   end
+    def reduce(%NaryTree{nodes: nodes}, acc, f) do
+      reduce_tree(nodes, acc, f)
+    end
 
-  #   defp reduce_tree(_, {:halt, acc}, _f), do: {:halted, acc}
-  #   defp reduce_tree(nodes, {:suspend, acc}, f), do: {:suspended, acc, &reduce_tree(nodes, &1, f)}
-  #   defp reduce_tree([], {:cont, acc}, _f), do: {:done, acc}
-  #   defp reduce_tree([h | t], {:cont, acc}, f), do: reduce_tree(t, f.(h, acc), f)
+    defp reduce_tree(_, {:halt, acc}, _f), do: {:halted, acc}
+    defp reduce_tree(nodes, {:suspend, acc}, f), do: {:suspended, acc, &reduce_tree(nodes, &1, f)}
+    defp reduce_tree([], {:cont, acc}, _f), do: {:done, acc}
+    defp reduce_tree([h | t], {:cont, acc}, f), do: reduce_tree(t, f.(h, acc), f)
 
-  #   def slice(_tree) do
-  #     {:error, NaryTree}        # let the default action take over
-  #   end
-  # end
+    def slice(_tree) do
+      {:error, NaryTree}        # let the default action take over
+    end
+  end
 end
 
 # alias __MODULE__, as: NT
-# root = NT.new 0, %{w: 0.45, name: "Goal"}
-# c1 = NT.new 1, %{w: 0.33, name: "Cost"}
-# c2 = NT.new 2, %{w: 0.67, name: "Benefits"}
-# a1 = NT.new 3, %{w: 0.1, name: "Alt 1"}
-# a2 = NT.new 4, %{w: 0.4, name: "Alt 2"}
-# a3 = NT.new 5, %{w: 0.5, name: "Alt 3"}
-# c11 = NT.new 6, %{w: 0.2, name: "Speed"}
-# c12 = NT.new 7, %{w: 0.3, name: "Image"}
-# c13 = NT.new 8, %{w: 0.5, name: "Features"}
-# c1 = c1 |> NT.add_child(a1) |> NT.add_child(a2) |> NT.add_child(a3)
-# c2.children |> Map.put(c11.id, c11) |> Map.put(c12.id, c12) |> Map.put(c13.id, c13)
+# alias NaryTree.Node, as: N
+# root = N.new "Goal", %{w: 0.45}
+# c1 = N.new "Cost", %{w: 0.33}
+# c2 = N.new "Benefits", %{w: 0.67}
+# a1 = N.new "Alt 1", %{w: 0.1}
+# a2 = N.new "Alt 2", %{w: 0.4}
+# a3 = N.new "Alt 3", %{w: 0.5}
+# c11 = N.new "Speed", %{w: 0.2}
+# c12 = N.new "Image", %{w: 0.3}
+# c13 = N.new "Features", %{w: 0.5}
 
-# tree = root |> NT.add_child(c1 |> NT.add_child(a1) |> NT.add_child(a2) |> NT.add_child(a3)) |>
-#   NT.add_child(c2 |> NT.add_child(c11) |> NT.add_child(c12) |> NT.add_child(c13))
+# tree = NT.new(root) |>
+#   NT.add_child(root.id, c1) |>
+#   NT.add_child(root.id, c2) |>
+#   NT.add_child(c1.id, a1) |>
+#   NT.add_child(c1.id, a2) |>
+#   NT.add_child(c1.id, a3) |>
+#   NT.add_child(c2.id, c11) |>
+#   NT.add_child(c2.id, c12) |>
+#   NT.add_child(c2.id, c13)
+
