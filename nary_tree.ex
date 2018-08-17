@@ -56,15 +56,6 @@ defmodule NaryTree do
     end)
   end
 
-  # def update_content(%__MODULE__{content: content, children: []} = node, func) do
-  #   %__MODULE__{node | content: func.(content)}
-  # end
-  # def update_content(%__MODULE__{content: content, children: children} = tree, func) do
-  #   updated_children = Enum.reduce children, children,
-  #     fn(child_id, acc) -> %{acc | id => update_content(child, func)} end
-  #   %__MODULE__{node | content: func.(content), children: updated_children}
-  # end
-
   # def flatten(%__MODULE__{children: children} = node) when children == %{}, do: [node]
   # def flatten(%__MODULE__{children: children} = tree) do
   #   node = %__MODULE__{ tree | children: %{}}
@@ -88,7 +79,6 @@ defmodule NaryTree do
   #   end
   # end
 
-  # TODO : there's a bug in here
   def print_tree(%__MODULE__{} = tree, func) do
     do_print_tree(%Node{} = tree.nodes[tree.root], tree.nodes, func)
   end
@@ -112,7 +102,7 @@ defmodule NaryTree do
     new_parent_node = tree.nodes[new_parent_id]
     pid = tree.nodes[hd child_ids].parent
     updated_nodes = Enum.reduce(child_ids, tree.nodes, fn(cid, acc) ->
-        Map.put acc, cid, %Node{ acc[cid] | parent: new_parent_id}
+        Map.put acc, cid, %Node{ acc[cid] | parent: new_parent_id, level: new_parent_node.level+1}
       end)
       |> Map.put(pid, %Node{ tree.nodes[pid] | children: tree.nodes[pid].children -- child_ids })
       |> Map.put(new_parent_id, %Node { new_parent_node | children: new_parent_node.children ++ child_ids })
