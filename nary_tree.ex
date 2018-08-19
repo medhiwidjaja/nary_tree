@@ -8,6 +8,7 @@ defmodule NaryTree do
 
     @spec new() :: __MODULE__.t()
     def new(), do: %__MODULE__{id: create_id(), name: :empty, content: :empty, parent: :empty, children: []}
+    def new(name), do: %__MODULE__{id: create_id(), name: name, content: :empty, parent: :empty, children: []}
     def new(name, content), do: %__MODULE__{id: create_id(), name: name, content: content, parent: :empty, children: []}
 
     defp create_id, do: Integer.to_string(:rand.uniform(4294967296), 32)
@@ -28,11 +29,14 @@ defmodule NaryTree do
     %__MODULE__{root: root.id, nodes: %{root.id => root}}
   end
 
-  # @spec add_child(__MODULE__.t(), Node.t()) :: __MODULE__.t()
-  def add_child(_, parent_id, %Node{id: child_id}) when parent_id == child_id do
+  def add_child(%__MODULE__{} = tree, %Node{} = child) do
+    add_child(tree, child, tree.root)
+  end
+
+  def add_child(_, %Node{id: child_id}, parent_id) when parent_id == child_id do
     raise "Cannot add child to its own node"
   end
-  def add_child(%__MODULE__{nodes: nodes} = tree, parent_id, %Node{id: child_id} = child) do
+  def add_child(%__MODULE__{nodes: nodes} = tree, %Node{id: child_id} = child, parent_id) do
     parent = tree.nodes[parent_id]
     updated_nodes = nodes
       |> Map.put_new(child_id, %Node{child | parent: parent.id, level: parent.level + 1})
@@ -118,13 +122,32 @@ defmodule NaryTree do
     end
   end
 
+  def merge(%__MODULE__{} = tree,
+            %__MODULE__{} = branch,
+            node_id)
+            when is_binary(node_id) do
+    if Enum.member? tree, node_id do
+      node = get(tree, node_id)
+      updated_node = node |> Map.put(:children, node.children ++ [branch.root])
+      tree_nodes = Map.put tree.nodes, node_id, updated_node
+      branch_nodes = branch.nodes
+        |> Enum.reduce(branch.nodes, fn({id, n}, acc) ->
+              Map.put acc, id, %Node{ n | level: n.level + node.level + 1 }
+            end)
+        |> Map.put branch.root, %Node{ root(branch) | parent: node.id , level: node.level + 1 }
+      %__MODULE__{ tree | nodes: Map.merge(tree_nodes, branch_nodes) }
+    else
+      :error
+    end
+  end
+
   defp add_all_descendents(tree, parent_id, node_id, old_tree) do
     node = get old_tree, node_id
     case node.children do
       [] ->
-        add_child(tree, parent_id, node)
+        add_child(tree, node, parent_id)
       _ ->
-        new_tree = add_child(tree, parent_id, node)
+        new_tree = add_child(tree, node, parent_id)
         Enum.reduce node.children, new_tree, fn(child_id, acc) ->
           add_all_descendents(acc, node.id, child_id, old_tree)
         end
@@ -232,12 +255,12 @@ end
 # c13 = N.new "Features", %{w: 0.5}
 
 # tree = NT.new(root) |>
-#   NT.add_child(root.id, c1) |>
-#   NT.add_child(root.id, c2) |>
-#   NT.add_child(c1.id, a1) |>
-#   NT.add_child(c1.id, a2) |>
-#   NT.add_child(c1.id, a3) |>
-#   NT.add_child(c2.id, c11) |>
-#   NT.add_child(c2.id, c12) |>
-#   NT.add_child(c2.id, c13)
+#   NT.add_child(c2, root.id) |>
+#   NT.add_child(c1, root.id) |>
+#   NT.add_child(a1, c1.id) |>
+#   NT.add_child(a2, c1.id) |>
+#   NT.add_child(a3, c1.id) |>
+#   NT.add_child(c11, c2.id) |>
+#   NT.add_child(c12, c2.id) |>
+#   NT.add_child(c13, c2.id)
 
