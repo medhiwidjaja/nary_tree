@@ -53,14 +53,25 @@ defmodule NaryTree do
   @spec has_content?(Node.t()) :: boolean()
   def has_content?(%Node{} = node), do: node.content != nil
 
+
+  def each_leaf(%__MODULE__{nodes: nodes} = tree, func) do
+    %__MODULE__{tree | nodes: do_each_leaf(nodes, func)}
+  end
+
+  defp do_each_leaf(nodes, func) do
+    Enum.reduce(nodes, nodes, fn({id, node}, acc) ->
+      if is_leaf?(node), do: Map.put(acc, id, Map.update!(node, :content, func)), else: acc
+    end)
+  end
+
   @spec update_content(__MODULE__.t(), function()) :: __MODULE__.t()
   def update_content(%__MODULE__{nodes: nodes} = tree, func) do
     %__MODULE__{tree | nodes: do_update_content(nodes, func)}
   end
 
   defp do_update_content(nodes, func) do
-    Enum.reduce(nodes, nodes, fn({id,n},acc) ->
-      Map.put(acc, id, Map.update!(n, :content, func))
+    Enum.reduce(nodes, nodes, fn({id, node}, acc) ->
+      Map.put(acc, id, Map.update!(node, :content, func))
     end)
   end
 
