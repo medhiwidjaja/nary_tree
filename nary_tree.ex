@@ -75,8 +75,8 @@ defmodule NaryTree do
     end)
   end
 
-  defp is_nary_tree?(%__MODULE__{}), do: true
-  defp is_nary_tree?(_), do: false
+  def is_nary_tree?(%__MODULE__{}), do: true
+  def is_nary_tree?(_), do: false
 
   def move_nodes(tree, [], _), do: tree
   def move_nodes(tree, nodes, %Node{} = new_parent) do
@@ -95,7 +95,9 @@ defmodule NaryTree do
 
   def get(%__MODULE__{nodes: nodes}, id), do: Map.get nodes, id
 
-  def put(%__MODULE__{nodes: nodes}, id, update), do: Map.put nodes, id, update
+  def put(%__MODULE__{nodes: nodes} = tree, id, update) do
+    %__MODULE__{ tree | nodes: Map.put(nodes, id, update) }
+  end
 
   def delete(%__MODULE__{} = tree, %Node{id: id}), do: delete(tree, id)
   def delete(%__MODULE__{nodes: nodes} = tree, id) do
@@ -145,7 +147,7 @@ defmodule NaryTree do
         |> Enum.reduce(branch.nodes, fn({id, n}, acc) ->
               Map.put acc, id, %Node{ n | level: n.level + node.level + 1 }
             end)
-        |> Map.put branch.root, %Node{ root(branch) | parent: node.id , level: node.level + 1 }
+        |> Map.put(branch.root, %Node{ root(branch) | parent: node.id , level: node.level + 1 })
       %__MODULE__{ tree | nodes: Map.merge(tree_nodes, branch_nodes) }
     else
       :error
@@ -223,8 +225,33 @@ defmodule NaryTree do
   def pop(tree, id, default \\ nil) do
     case delete(tree, id) do
       %__MODULE__{} = new_tree ->
-        {__MODULE__.get(tree, id), new_tree}
+        {get(tree, id), new_tree}
       :error -> {default, tree}
+    end
+  end
+
+  # def to_list(%__MODULE__{nodes: nodes}) do
+  #   Map.values nodes
+  # end
+
+  def to_list(%__MODULE__{nodes: nodes} = tree) do
+    traverse(%Node{} = tree.nodes[tree.root], nodes, [])
+    |> :lists.reverse()
+  end
+
+  defp traverse(node, _, _) when is_nil(node), do: raise "Expecting %NaryTree.Node(), found nil."
+  defp traverse(%Node{children: children} = node, _nodes, acc) when children == [] do
+    [node | acc]
+  end
+  defp traverse(%Node{children: children} = node, nodes, acc) do
+    Enum.reduce children, [node | acc], fn(child_id, accumulator) ->
+      traverse nodes[child_id], nodes, accumulator
+    end
+  end
+
+  def list_to_nodes(list) when is_list(list) do
+    Enum.reduce list, %{}, fn(node, acc) ->
+      Map.put_new(acc, node.id, node)
     end
   end
 
@@ -238,8 +265,10 @@ defmodule NaryTree do
       end
     end
 
-    def reduce(%NaryTree{nodes: nodes}, acc, f) do
-      reduce_tree(nodes, acc, f)
+    def reduce(%NaryTree{} = tree, acc, f) do
+      tree
+      |> NaryTree.to_list()
+      |> reduce_tree(acc, f)
     end
 
     defp reduce_tree(_, {:halt, acc}, _f), do: {:halted, acc}
