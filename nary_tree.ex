@@ -1,12 +1,13 @@
 defmodule NaryTree do
+  defstruct root: nil, nodes: %{}
 
-  defmodule Node do
+  defmodule NaryTree.Node do
     @enforce_keys [:id]
     defstruct id: :empty, name: :empty, content: :empty, parent: :empty, level: 0, children: []
 
-    @type t :: %__MODULE__{id: String.t, name: String.t, content: any(), parent: String.t, children: []}
+    #@type t :: %NaryTree{id: String.t, name: String.t, content: any(), parent: String.t, children: []}
 
-    @spec new() :: __MODULE__.t()
+    #@spec new() :: __MODULE__.t()
     def new(), do: %__MODULE__{id: create_id(), name: :empty, content: :empty, parent: :empty, children: []}
     def new(name), do: %__MODULE__{id: create_id(), name: name, content: :empty, parent: :empty, children: []}
     def new(name, content), do: %__MODULE__{id: create_id(), name: name, content: content, parent: :empty, children: []}
@@ -16,14 +17,12 @@ defmodule NaryTree do
 
   alias NaryTree.Node
 
-  defstruct root: nil, nodes: %{}
+  # @type t :: %__MODULE__{root: String.t, nodes: [%__MODULE__{}]}
 
-  @type t :: %__MODULE__{root: String.t, nodes: [%__MODULE__{}]}
-
-  @spec new() :: __MODULE__.t()
+  # @spec new() :: __MODULE__.t()
   def new(), do: %__MODULE__{}
 
-  @spec new(Node.t()) :: __MODULE__.t()
+  # @spec new(Node.t()) :: __MODULE__.t()
   def new(%Node{} = node) do
     root = %Node{ node | parent: :empty, level: 0 }
     %__MODULE__{root: root.id, nodes: %{root.id => root}}
@@ -44,13 +43,13 @@ defmodule NaryTree do
     %__MODULE__{tree | nodes: updated_nodes}
   end
 
-  @spec is_root?(Node.t()) :: boolean()
+  #@spec is_root?(Node.t()) :: boolean()
   def is_root?(%Node{} = node), do: node.parent == :empty || node.parent == nil
 
-  @spec is_leaf?(Node.t()) :: boolean()
+  #@spec is_leaf?(Node.t()) :: boolean()
   def is_leaf?(%Node{} = node), do: node.children == []
 
-  @spec has_content?(Node.t()) :: boolean()
+  #@spec has_content?(Node.t()) :: boolean()
   def has_content?(%Node{} = node), do: node.content != nil
 
 
@@ -64,7 +63,7 @@ defmodule NaryTree do
     end)
   end
 
-  @spec update_content(__MODULE__.t(), function()) :: __MODULE__.t()
+  #@spec update_content(__MODULE__.t(), function()) :: __MODULE__.t()
   def update_content(%__MODULE__{nodes: nodes} = tree, func) do
     %__MODULE__{tree | nodes: do_update_content(nodes, func)}
   end
@@ -75,6 +74,7 @@ defmodule NaryTree do
     end)
   end
 
+  #@spec is_nary_tree?(__MODULE__.t()) :: boolean()
   def is_nary_tree?(%__MODULE__{}), do: true
   def is_nary_tree?(_), do: false
 
@@ -230,10 +230,6 @@ defmodule NaryTree do
     end
   end
 
-  # def to_list(%__MODULE__{nodes: nodes}) do
-  #   Map.values nodes
-  # end
-
   def to_list(%__MODULE__{nodes: nodes} = tree) do
     traverse(%Node{} = tree.nodes[tree.root], nodes, [])
     |> :lists.reverse()
@@ -258,12 +254,31 @@ defmodule NaryTree do
   defimpl Enumerable do
     def count(%NaryTree{nodes: nodes}), do: {:ok, Map.size(nodes)}
 
+    @doc """
+    ## TODO
+    ## Examples
+        iex> r = NaryTree.new NaryTree.Node.new("Root", 3)
+        ...> n = NaryTree.Node.new("Branch", 100)
+        ...> NaryTree.add_child r, n
+        ...> Enum.member? r, n.id
+        true
+    """
     def member?(%NaryTree{nodes: nodes}, id) do
       case Map.has_key? nodes, id do
         true -> {:ok, true}
         false -> {:ok, false}
       end
     end
+
+    @doc """
+    ## TODO
+    ## Examples
+        iex> Enum.reduce tt, tt, fn(n, acc) ->
+        ...>   p = NaryTree.parent(n, acc)
+        ...>   pz = if p, do: p.content.w, else: 0
+        ...>   NaryTree.put acc, n.id, %NaryTree.Node{n | content: %{n.content | w: n.content.w + pz}}
+        ...> end
+    """
 
     def reduce(%NaryTree{} = tree, acc, f) do
       tree
