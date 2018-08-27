@@ -5,9 +5,9 @@ defmodule NaryTree do
     @enforce_keys [:id]
     defstruct id: :empty, name: :empty, content: :empty, parent: :empty, level: 0, children: []
 
-    #@type t :: %NaryTree{id: String.t, name: String.t, content: any(), parent: String.t, children: []}
+    @type t :: %NaryTree{id: String.t, name: String.t, content: any(), parent: String.t, children: []}
 
-    #@spec new() :: __MODULE__.t()
+    @spec new() :: __MODULE__.t()
     def new(), do: %__MODULE__{id: create_id(), name: :empty, content: :empty, parent: :empty, children: []}
     def new(name), do: %__MODULE__{id: create_id(), name: name, content: :empty, parent: :empty, children: []}
     def new(name, content), do: %__MODULE__{id: create_id(), name: name, content: content, parent: :empty, children: []}
@@ -17,12 +17,12 @@ defmodule NaryTree do
 
   alias NaryTree.Node
 
-  # @type t :: %__MODULE__{root: String.t, nodes: [%__MODULE__{}]}
+  @type t :: %__MODULE__{root: String.t, nodes: [%__MODULE__{}]}
 
-  # @spec new() :: __MODULE__.t()
+  @spec new() :: __MODULE__.t()
   def new(), do: %__MODULE__{}
 
-  # @spec new(Node.t()) :: __MODULE__.t()
+  @spec new(Node.t()) :: __MODULE__.t()
   def new(%Node{} = node) do
     root = %Node{ node | parent: :empty, level: 0 }
     %__MODULE__{root: root.id, nodes: %{root.id => root}}
@@ -43,13 +43,13 @@ defmodule NaryTree do
     %__MODULE__{tree | nodes: updated_nodes}
   end
 
-  #@spec is_root?(Node.t()) :: boolean()
+  @spec is_root?(Node.t()) :: boolean()
   def is_root?(%Node{} = node), do: node.parent == :empty || node.parent == nil
 
-  #@spec is_leaf?(Node.t()) :: boolean()
+  @spec is_leaf?(Node.t()) :: boolean()
   def is_leaf?(%Node{} = node), do: node.children == []
 
-  #@spec has_content?(Node.t()) :: boolean()
+  @spec has_content?(Node.t()) :: boolean()
   def has_content?(%Node{} = node), do: node.content != nil
 
 
@@ -63,7 +63,7 @@ defmodule NaryTree do
     end)
   end
 
-  #@spec update_content(__MODULE__.t(), function()) :: __MODULE__.t()
+  @spec update_content(__MODULE__.t(), function()) :: __MODULE__.t()
   def update_content(%__MODULE__{nodes: nodes} = tree, func) do
     %__MODULE__{tree | nodes: do_update_content(nodes, func)}
   end
@@ -74,7 +74,7 @@ defmodule NaryTree do
     end)
   end
 
-  #@spec is_nary_tree?(__MODULE__.t()) :: boolean()
+  @spec is_nary_tree?(__MODULE__.t()) :: boolean()
   def is_nary_tree?(%__MODULE__{}), do: true
   def is_nary_tree?(_), do: false
 
