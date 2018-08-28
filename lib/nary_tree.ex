@@ -7,9 +7,32 @@ defmodule NaryTree do
 
     @type t :: %__MODULE__{id: String.t, name: String.t, content: any(), parent: String.t, children: []}
 
+    @doc """
+    Create a new, empty node.
+    """
     @spec new() :: __MODULE__.t()
     def new(), do: %__MODULE__{id: create_id(), name: :empty, content: :empty, parent: :empty, children: []}
+
+    @doc """
+    Create a new, empty node with name.
+
+    ## Example
+        iex> node = NaryTree.Node.new("Node")
+        iex> node.name
+        "Node"
+    """
     def new(name), do: %__MODULE__{id: create_id(), name: name, content: :empty, parent: :empty, children: []}
+
+    @doc """
+    Create a new, empty node with name and content.
+
+    ## Example
+        iex> node = NaryTree.Node.new("Root", %{w: 100})
+        iex> node.name
+        "Root"
+        iex> node.content
+        %{w: 100}
+    """    
     def new(name, content), do: %__MODULE__{id: create_id(), name: name, content: content, parent: :empty, children: []}
 
     defp create_id, do: Integer.to_string(:rand.uniform(4294967296), 32)
@@ -19,19 +42,72 @@ defmodule NaryTree do
  
   @type t :: %__MODULE__{root: String.t, nodes: [%__MODULE__{}]}
 
+  @doc """
+  Create a new, empty tree.
+
+  ## Example
+      iex> NaryTree.new()
+      %NaryTree{nodes: %{}, root: nil}
+  """
   @spec new() :: __MODULE__.t()
   def new(), do: %__MODULE__{}
 
+  @doc """
+  Create a new tree with a root node.
+
+  ## Example
+      iex> %NaryTree{root: key, nodes: nodes} = NaryTree.new(NaryTree.Node.new "Root node")
+      iex> nodes[key].name
+      "Root node"
+  """
   @spec new(Node.t()) :: __MODULE__.t()
   def new(%Node{} = node) do
     root = %Node{ node | parent: :empty, level: 0 }
     %__MODULE__{root: root.id, nodes: %{root.id => root}}
   end
 
+  @doc """
+  Add a child node to a tree root node. Returns an updated tree with added child.
+
+          RootNode
+           \
+           ChildNode
+
+  ## Example
+      iex> tree = NaryTree.new(NaryTree.Node.new "Root node") |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("Child"))
+      iex> %NaryTree{root: key, nodes: nodes} = tree
+      iex> [child_id | _] = nodes[key].children
+      iex> nodes[child_id].name
+      "Child"
+  """
+  @spec add_child(__MODULE__.t(), Node.t()) :: __MODULE__.t()
   def add_child(%__MODULE__{} = tree, %Node{} = child) do
     add_child(tree, child, tree.root)
   end
 
+  @doc """
+  Add a child node to the specified tree node. Returns an updated tree with added child.
+
+        RootNode
+           \
+           BranchNode
+              \
+              New node
+
+  ## Example
+      iex> tree = NaryTree.new NaryTree.Node.new("Root node")
+      iex> branch_node = NaryTree.Node.new "Branch node"
+      iex> new_node = NaryTree.Node.new "New node"
+      iex> new_tree = NaryTree.add_child(tree, branch_node) |>
+      ...>   NaryTree.add_child(new_node, branch_node.id)
+      iex> %NaryTree.Node{name: branch_name} = branch = new_tree.nodes[hd new_tree.nodes[tree.root].children]
+      iex> branch_name
+      "Branch node"
+      iex> %NaryTree.Node{name: child_name} = child = new_tree.nodes[hd new_tree.nodes[branch.id].children]
+      iex> child_name
+      "New node"
+  """
   def add_child(_, %Node{id: child_id}, parent_id) when parent_id == child_id do
     raise "Cannot add child to its own node"
   end
@@ -43,26 +119,56 @@ defmodule NaryTree do
     %__MODULE__{tree | nodes: updated_nodes}
   end
 
+  @doc """
+  Check whether a node is a root node.
+
+  ## Example
+      iex> node = NaryTree.Node.new "Root node"
+      iex> NaryTree.is_root? node
+      true
+  """
   @spec is_root?(Node.t()) :: boolean()
   def is_root?(%Node{} = node), do: node.parent == :empty || node.parent == nil
 
+  @doc """
+  Check whether a node is a leaf node.
+
+  ## Example
+      iex> tree = NaryTree.new(NaryTree.Node.new("Root node")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("Leaf node"))
+      iex> [node_id] = tree.nodes[tree.root].children
+      iex> leaf_node = tree.nodes[node_id]
+      iex> NaryTree.is_leaf? leaf_node
+      true
+  """
   @spec is_leaf?(Node.t()) :: boolean()
   def is_leaf?(%Node{} = node), do: node.children == []
 
+  @doc """
+  Check whether a node has non-empty content.
+
+  ## Example
+      iex> node = NaryTree.Node.new "Node", content: %{c: "Content"}
+      iex> NaryTree.has_content? node
+      true
+  """
   @spec has_content?(Node.t()) :: boolean()
-  def has_content?(%Node{} = node), do: node.content != nil
+  def has_content?(%Node{} = node), do: !(node.content == nil || node.content == :empty)
 
+  @doc """
+  Enumerates tree nodes, and applies function to each node's content.
+  Returns updated tree, with new content for every nodes
 
-  def each_leaf(%__MODULE__{nodes: nodes} = tree, func) do
-    %__MODULE__{tree | nodes: do_each_leaf(nodes, func)}
-  end
-
-  defp do_each_leaf(nodes, func) do
-    Enum.reduce(nodes, nodes, fn({id, node}, acc) ->
-      if is_leaf?(node), do: Map.put(acc, id, Map.update!(node, :content, func)), else: acc
-    end)
-  end
-
+  ## Example
+      iex> tree = NaryTree.new(NaryTree.Node.new("Root node")) |> 
+      ...>   NaryTree.add_child(NaryTree.Node.new("Leaf node 1")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("Leaf node 2")) 
+      iex> Enum.map tree.nodes, fn({_,node}) -> node.content end
+      [:empty, :empty, :empty]
+      iex> NaryTree.update_content(tree, fn(_) -> %{x: 4} end) |> 
+      ...>   Map.get(:nodes) |> Enum.map(fn({_,node}) -> node.content end)
+      [%{x: 4}, %{x: 4}, %{x: 4}]
+  """
   @spec update_content(__MODULE__.t(), function()) :: __MODULE__.t()
   def update_content(%__MODULE__{nodes: nodes} = tree, func) do
     %__MODULE__{tree | nodes: do_update_content(nodes, func)}
@@ -74,14 +180,42 @@ defmodule NaryTree do
     end)
   end
 
+  @doc """
+  Enumerates tree nodes, and applies function to each leaf nodes' content.
+  Similar to update_content/2, but applies only to leaf nodes.
+
+  ## Example
+      iex> tree = NaryTree.new(NaryTree.Node.new("Root node")) |> 
+      ...>   NaryTree.add_child(NaryTree.Node.new("Leaf node 1")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("Leaf node 2"))
+      iex> Enum.map tree.nodes, fn({_,node}) -> node.content end
+      [:empty, :empty, :empty]
+      iex> NaryTree.each_leaf(tree, fn(_) -> %{x: 4} end) |> 
+      ...>   Map.get(:nodes) |> Enum.map(fn({_,node}) -> node.content end)
+      [%{x: 4}, :empty, %{x: 4}]
+  """
+  @spec each_leaf(__MODULE__.t(), function()) :: __MODULE__.t()
+  def each_leaf(%__MODULE__{nodes: nodes} = tree, func) do
+    %__MODULE__{tree | nodes: do_each_leaf(nodes, func)}
+  end
+
+  defp do_each_leaf(nodes, func) do
+    Enum.reduce(nodes, nodes, fn({id, node}, acc) ->
+      if is_leaf?(node), do: Map.put(acc, id, Map.update!(node, :content, func)), else: acc
+    end)
+  end
+
   @spec is_nary_tree?(__MODULE__.t()) :: boolean()
   def is_nary_tree?(%__MODULE__{}), do: true
   def is_nary_tree?(_), do: false
 
+  @spec move_nodes(__MODULE__.t(), [Node.t()], Node.t()) :: __MODULE__.t()
   def move_nodes(tree, [], _), do: tree
   def move_nodes(tree, nodes, %Node{} = new_parent) do
     move_nodes(tree, Enum.map(nodes, fn(n) -> n.id end), new_parent.id)
   end
+
+  @spec move_nodes(__MODULE__.t(), [String.t()], String.t()) :: __MODULE__.t()
   def move_nodes(tree, child_ids, new_parent_id) do
     new_parent_node = tree.nodes[new_parent_id]
     pid = tree.nodes[hd child_ids].parent
