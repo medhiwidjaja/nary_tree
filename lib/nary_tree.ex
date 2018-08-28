@@ -196,7 +196,8 @@ defmodule NaryTree do
   """
   @spec each_leaf(__MODULE__.t(), function()) :: __MODULE__.t()
   def each_leaf(%__MODULE__{nodes: nodes} = tree, func) do
-    %__MODULE__{tree | nodes: do_each_leaf(nodes, func)}
+    sorted = to_list(tree) |> list_to_nodes()
+    %__MODULE__{tree | nodes: do_each_leaf(sorted, func)}
   end
 
   defp do_each_leaf(nodes, func) do
