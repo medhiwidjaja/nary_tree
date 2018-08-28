@@ -192,11 +192,11 @@ defmodule NaryTree do
       [:empty, :empty, :empty]
       iex> NaryTree.each_leaf(tree, fn(_) -> %{x: 4} end) |> 
       ...>   Map.get(:nodes) |> Enum.map(fn({_,node}) -> node.content end)
-      [%{x: 4}, :empty, %{x: 4}]
+      [:empty, %{x: 4}, %{x: 4}]
   """
   @spec each_leaf(__MODULE__.t(), function()) :: __MODULE__.t()
-  def each_leaf(%__MODULE__{nodes: nodes} = tree, func) do
-    sorted = to_list(tree) |> list_to_nodes()
+  def each_leaf(%__MODULE__{} = tree, func) do
+    sorted = to_list(tree) |> :lists.reverse() |> list_to_nodes() 
     %__MODULE__{tree | nodes: do_each_leaf(sorted, func)}
   end
 
