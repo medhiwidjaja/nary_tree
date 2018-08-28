@@ -206,10 +206,21 @@ defmodule NaryTree do
     end)
   end
 
+  @doc """
+  Check whether the argument is of NaryTree type.
+
+  ## Example
+      iex> NaryTree.is_nary_tree? NaryTree.new(NaryTree.Node.new "Node")
+      true
+  """
   @spec is_nary_tree?(__MODULE__.t()) :: boolean()
   def is_nary_tree?(%__MODULE__{}), do: true
   def is_nary_tree?(_), do: false
 
+  @doc """
+  Move children nodes from one node to another node.
+
+  """
   @spec move_nodes(__MODULE__.t(), [Node.t()], Node.t()) :: __MODULE__.t()
   def move_nodes(tree, [], _), do: tree
   def move_nodes(tree, nodes, %Node{} = new_parent) do
@@ -228,6 +239,17 @@ defmodule NaryTree do
     %__MODULE__{ tree | nodes: updated_nodes }
   end
 
+  @doc """
+  Get the node with the specified id from the tree.
+
+  ## Example
+      iex> node = NaryTree.Node.new("Leaf node")
+      iex> tree = NaryTree.new(NaryTree.Node.new("Root node")) |> 
+      ...>   NaryTree.add_child(node) |>
+      iex> n = NaryTree.get(tree, node.id)
+      iex> n.name
+      "Leaf node"
+  """
   def get(%__MODULE__{nodes: nodes}, id), do: Map.get nodes, id
 
   def put(%__MODULE__{nodes: nodes} = tree, id, update) do
