@@ -7,13 +7,13 @@ defmodule NaryTree do
 
     @type t :: %__MODULE__{id: String.t, name: String.t, content: any(), parent: String.t, children: []}
 
-    @doc """
+    @doc ~S"""
     Create a new, empty node.
     """
     @spec new() :: __MODULE__.t()
     def new(), do: %__MODULE__{id: create_id(), name: :empty, content: :empty, parent: :empty, children: []}
 
-    @doc """
+    @doc ~S"""
     Create a new, empty node with name.
 
     ## Example
@@ -23,7 +23,7 @@ defmodule NaryTree do
     """
     def new(name), do: %__MODULE__{id: create_id(), name: name, content: :empty, parent: :empty, children: []}
 
-    @doc """
+    @doc ~S"""
     Create a new, empty node with name and content.
 
     ## Example
@@ -42,7 +42,7 @@ defmodule NaryTree do
  
   @type t :: %__MODULE__{root: String.t, nodes: [%__MODULE__{}]}
 
-  @doc """
+  @doc ~S"""
   Create a new, empty tree.
 
   ## Example
@@ -52,7 +52,7 @@ defmodule NaryTree do
   @spec new() :: __MODULE__.t()
   def new(), do: %__MODULE__{}
 
-  @doc """
+  @doc ~S"""
   Create a new tree with a root node.
 
   ## Example
@@ -66,7 +66,7 @@ defmodule NaryTree do
     %__MODULE__{root: root.id, nodes: %{root.id => root}}
   end
 
-  @doc """
+  @doc ~S"""
   Add a child node to a tree root node. Returns an updated tree with added child.
 
           RootNode
@@ -86,7 +86,7 @@ defmodule NaryTree do
     add_child(tree, child, tree.root)
   end
 
-  @doc """
+  @doc ~S"""
   Add a child node to the specified tree node. Returns an updated tree with added child.
 
         RootNode
@@ -119,7 +119,7 @@ defmodule NaryTree do
     %__MODULE__{tree | nodes: updated_nodes}
   end
 
-  @doc """
+  @doc ~S"""
   Check whether a node is a root node.
 
   ## Example
@@ -130,7 +130,7 @@ defmodule NaryTree do
   @spec is_root?(Node.t()) :: boolean()
   def is_root?(%Node{} = node), do: node.parent == :empty || node.parent == nil
 
-  @doc """
+  @doc ~S"""
   Check whether a node is a leaf node.
 
   ## Example
@@ -144,7 +144,7 @@ defmodule NaryTree do
   @spec is_leaf?(Node.t()) :: boolean()
   def is_leaf?(%Node{} = node), do: node.children == []
 
-  @doc """
+  @doc ~S"""
   Check whether a node has non-empty content.
 
   ## Example
@@ -155,7 +155,7 @@ defmodule NaryTree do
   @spec has_content?(Node.t()) :: boolean()
   def has_content?(%Node{} = node), do: !(node.content == nil || node.content == :empty)
 
-  @doc """
+  @doc ~S"""
   Enumerates tree nodes, and applies function to each node's content.
   Returns updated tree, with new content for every nodes
 
@@ -180,7 +180,7 @@ defmodule NaryTree do
     end)
   end
 
-  @doc """
+  @doc ~S"""
   Enumerates tree nodes, and applies function to each leaf nodes' content.
   Similar to update_content/2, but applies only to leaf nodes.
 
@@ -196,17 +196,21 @@ defmodule NaryTree do
   """
   @spec each_leaf(__MODULE__.t(), function()) :: __MODULE__.t()
   def each_leaf(%__MODULE__{} = tree, func) do
-    sorted = to_list(tree) |> :lists.reverse() |> list_to_nodes() 
-    %__MODULE__{tree | nodes: do_each_leaf(sorted, func)}
+    node_list = to_list(tree) 
+    %__MODULE__{tree | nodes: do_each_leaf(node_list, func)}
   end
 
   defp do_each_leaf(nodes, func) do
-    Enum.reduce(nodes, nodes, fn({id, node}, acc) ->
-      if is_leaf?(node), do: Map.put(acc, id, Map.update!(node, :content, func)), else: acc
+    Enum.reduce(nodes, %{}, fn(%Node{} = node, acc) ->
+      if is_leaf?(node) do
+        Map.put_new(acc, node.id, Map.update!(node, :content, func))
+      else
+        Map.put_new(acc, node.id, node)
+      end
     end)
   end
 
-  @doc """
+  @doc ~S"""
   Check whether the argument is of NaryTree type.
 
   ## Example
@@ -217,7 +221,7 @@ defmodule NaryTree do
   def is_nary_tree?(%__MODULE__{}), do: true
   def is_nary_tree?(_), do: false
 
-  @doc """
+  @doc ~S"""
   Move children nodes from one node to another node.
 
   """
@@ -239,7 +243,7 @@ defmodule NaryTree do
     %__MODULE__{ tree | nodes: updated_nodes }
   end
 
-  @doc """
+  @doc ~S"""
   Get the node with the specified id from the tree.
 
   ## Example
@@ -343,7 +347,7 @@ defmodule NaryTree do
     |> List.delete(node)
   end
 
-  def print_tree(%__MODULE__{} = tree, func) do
+  def print_tree(%__MODULE__{} = tree, func \\ fn(x) -> "#{x.name}" end) do
     do_print_tree(%Node{} = tree.nodes[tree.root], tree.nodes, func)
   end
 
