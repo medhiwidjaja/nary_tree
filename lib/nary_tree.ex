@@ -249,7 +249,7 @@ defmodule NaryTree do
   ## Example
       iex> node = NaryTree.Node.new("Leaf node")
       iex> tree = NaryTree.new(NaryTree.Node.new("Root node")) |> 
-      ...>   NaryTree.add_child(node) |>
+      ...>   NaryTree.add_child(node)
       iex> n = NaryTree.get(tree, node.id)
       iex> n.name
       "Leaf node"
