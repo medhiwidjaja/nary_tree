@@ -240,10 +240,44 @@ defmodule NaryTree do
   """
   def get(%__MODULE__{nodes: nodes}, id), do: Map.get nodes, id
 
-  def put(%__MODULE__{nodes: nodes} = tree, id, update) do
-    %__MODULE__{ tree | nodes: Map.put(nodes, id, update) }
+  @doc ~S"""
+  Put a node into the tree at the specified id.
+  Put will replace the name and content attributes of the node at id with
+  the attributes of the new nodes.
+  The children and parent of the old node will remain the same so that
+  the hierarchy structure remains the same.
+
+  ## Example
+      iex> tree = NaryTree.new NaryTree.Node.new("Root")
+      iex> tree.nodes[tree.root].name
+      "Root"
+      iex> tree = NaryTree.put(tree, tree.root, NaryTree.Node.new("Node"))
+      iex> tree.nodes[tree.root].name
+      "Node"
+  """
+  def put(%__MODULE__{nodes: nodes} = tree, id, node_to_replace) do
+    updated_node = %Node{nodes[id] | content: node_to_replace.content, name: node_to_replace.name}
+    %__MODULE__{ tree | nodes: Map.put(nodes, id, updated_node) }
   end
 
+  @doc ~S"""
+  Delete a node in a tree.
+  If the deleted node has children, the children will be moved up in hierarchy
+  to become the children of the deleted node's parent.
+
+  ## Example
+      iex> branch = NaryTree.Node.new("Branch Node")
+      iex> leaf = NaryTree.Node.new("Leaf")
+      iex> tree = NaryTree.new(NaryTree.Node.new("Root Node")) |>
+      ...>   NaryTree.add_child(branch) |>
+      ...>   NaryTree.add_child(leaf, branch.id) |>
+      ...>   NaryTree.delete(branch.id)
+      iex> tree.nodes[branch.id]
+      nil
+      iex> tree.nodes[tree.root].children   # leaf becomes root's child
+      [leaf.id]
+  """
+  @spec delete(NaryTree.t(), any()) :: :error
   def delete(%__MODULE__{} = tree, %Node{id: id}), do: delete(tree, id)
   def delete(%__MODULE__{nodes: nodes} = tree, id) do
     if Enum.member? tree, id do
@@ -268,6 +302,22 @@ defmodule NaryTree do
     %__MODULE__{ tree | nodes: Map.delete(tree.nodes, id) }
   end
 
+  @doc ~S"""
+  Detach a branch in a tree. Returns the detached branch conplete with all its
+  descendents as a new tree struct.
+
+  ## Example
+      iex> branch = NaryTree.Node.new("Branch Node")
+      iex> leaf = NaryTree.Node.new("Leaf")
+      iex> tree = NaryTree.new(NaryTree.Node.new("Root Node")) |>
+      ...>   NaryTree.add_child(branch) |>
+      ...>   NaryTree.add_child(leaf, branch.id)
+      iex> detached = NaryTree.detach(tree, branch.id)
+      iex> Enum.count detached.nodes
+      2
+      iex> detached.root
+      branch.id
+  """
   def detach(%__MODULE__{} = tree, node_id) when is_binary(node_id) do
     if Enum.member? tree, node_id do
       root = get(tree, node_id)
@@ -280,6 +330,34 @@ defmodule NaryTree do
     end
   end
 
+  defp add_all_descendents(tree, parent_id, node_id, old_tree) do
+    node = get old_tree, node_id
+    case node.children do
+      [] ->
+        add_child(tree, node, parent_id)
+      _ ->
+        new_tree = add_child(tree, node, parent_id)
+        Enum.reduce node.children, new_tree, fn(child_id, acc) ->
+          add_all_descendents(acc, node.id, child_id, old_tree)
+        end
+    end
+  end
+
+  @doc ~S"""
+  Merges a tree into another tree at the specified node point.
+  Returns the resulting combined tree or :error if the specified
+  node point doesn't exist.
+
+  ## Example
+      iex> branch = NaryTree.Node.new("Branch Node")
+      iex> tree1 = NaryTree.new(NaryTree.Node.new("Root Node")) |>
+      ...>   NaryTree.add_child(branch)
+      iex> tree2 = NaryTree.new(NaryTree.Node.new("Subtree")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("Leaf"))
+      iex> combined = NaryTree.merge(tree1, tree2, branch.id)
+      iex> Enum.count combined.nodes
+      4
+  """
   def merge(%__MODULE__{} = tree,
             %__MODULE__{} = branch,
             node_id)
@@ -299,20 +377,17 @@ defmodule NaryTree do
     end
   end
 
-  defp add_all_descendents(tree, parent_id, node_id, old_tree) do
-    node = get old_tree, node_id
-    case node.children do
-      [] ->
-        add_child(tree, node, parent_id)
-      _ ->
-        new_tree = add_child(tree, node, parent_id)
-        Enum.reduce node.children, new_tree, fn(child_id, acc) ->
-          add_all_descendents(acc, node.id, child_id, old_tree)
-        end
-    end
-  end
-
   # Familial Relationships
+
+  @doc ~S"""
+  Returns the root node of a tree.
+
+  ## Example
+      iex> tree = NaryTree.new(NaryTree.Node.new("Root Node"))
+      iex> %NaryTree.Node{name: name} = NaryTree.root(tree)
+      iex> name
+      "Root Node"
+  """
   def root(%__MODULE__{} = tree) do
     get tree, tree.root
   end
@@ -321,6 +396,17 @@ defmodule NaryTree do
     Enum.map node.children, &(get tree, &1)
   end
 
+  @doc ~S"""
+  Returns the parent node of a tree, or :empty if there is none
+
+  ## Example
+      iex> branch = NaryTree.Node.new("Branch Node")
+      iex> tree = NaryTree.new(NaryTree.Node.new("Root Node")) |>
+      ...>   NaryTree.add_child(branch)
+      iex> %NaryTree.Node{name: name} = NaryTree.root(tree)
+      iex> name
+      "Root Node"
+  """
   def parent(%Node{} = node, %__MODULE__{} = tree) do
     get tree, node.parent
   end
