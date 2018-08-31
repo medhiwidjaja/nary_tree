@@ -100,8 +100,8 @@ defmodule NaryTree do
       iex> tree = NaryTree.new(NaryTree.Node.new("Root Node")) |>
       ...>   NaryTree.add_child(branch) |>
       ...>   NaryTree.add_child(NaryTree.Node.new("New node"), branch.id)
-      iex> Enum.map tree.nodes, fn(_, n) -> n.name end
-      ["Root Node", "New node", "Branch Node"]
+      iex> Enum.count tree.nodes
+      3
   """
   def add_child(_, %Node{id: child_id}, parent_id) when parent_id == child_id do
     raise "Cannot add child to its own node"
@@ -179,28 +179,18 @@ defmodule NaryTree do
   Enumerates tree nodes, and applies function to each leaf nodes' content.
   Similar to update_content/2, but applies only to leaf nodes.
 
-  ## Example
-      iex> tree = NaryTree.new(NaryTree.Node.new("Root node")) |>
-      ...>   NaryTree.add_child(NaryTree.Node.new("Leaf node 1")) |>
-      ...>   NaryTree.add_child(NaryTree.Node.new("Leaf node 2"))
-      iex> Enum.map tree.nodes, fn({_,node}) -> node.content end
-      [:empty, :empty, :empty]
-      iex> NaryTree.each_leaf(tree, fn(_) -> %{x: 4} end) |>
-      ...>   Map.get(:nodes) |> Enum.map(fn({_,node}) -> node.content end)
-      [:empty, %{x: 4}, %{x: 4}]
   """
   @spec each_leaf(__MODULE__.t(), function()) :: __MODULE__.t()
-  def each_leaf(%__MODULE__{} = tree, func) do
-    node_list = to_list(tree)
-    %__MODULE__{tree | nodes: do_each_leaf(node_list, func)}
+  def each_leaf(%__MODULE__{nodes: nodes} = tree, func) do
+    %__MODULE__{tree | nodes: do_each_leaf(nodes, func)}
   end
 
   defp do_each_leaf(nodes, func) do
-    Enum.reduce(nodes, %{}, fn(%Node{} = node, acc) ->
+    Enum.reduce(nodes, nodes, fn({_,node}, acc) ->
       if is_leaf?(node) do
-        Map.put_new(acc, node.id, Map.update!(node, :content, func))
+        Map.put(acc, node.id, Map.update!(node, :content, func))
       else
-        Map.put_new(acc, node.id, node)
+        acc
       end
     end)
   end
