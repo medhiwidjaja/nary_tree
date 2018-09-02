@@ -213,7 +213,7 @@ defmodule NaryTree do
   @spec move_nodes(__MODULE__.t(), [Node.t()], Node.t()) :: __MODULE__.t()
   def move_nodes(tree, [], _), do: tree
   def move_nodes(tree, nodes, %Node{} = new_parent) do
-    move_nodes(tree, Enum.map(nodes, fn(n) -> n.id end), new_parent.id)
+    move_nodes(tree, Enum.map(nodes, &(&1.id)), new_parent.id)
   end
 
   @spec move_nodes(__MODULE__.t(), [String.t()], String.t()) :: __MODULE__.t()
@@ -392,6 +392,10 @@ defmodule NaryTree do
     get tree, tree.root
   end
 
+  @doc ~S"""
+  Returns the children nodes of a tree.
+
+  """
   def children(%Node{} = node, %__MODULE__{} = tree) do
     Enum.map node.children, &(get tree, &1)
   end
@@ -411,12 +415,25 @@ defmodule NaryTree do
     get tree, node.parent
   end
 
+  @doc ~S"""
+  Returns the sibling nodes of a node.
+  
+  """
   def siblings(%Node{} = node, %__MODULE__{} = tree) do
    parent(node, tree)
     |> children(tree)
     |> List.delete(node)
   end
 
+  @doc ~S"""
+  Prints a tree in hierarchical fashion. 
+  The second parameter is an optional function that accepts a node as a parameter.
+  print_tree will output the return value of the function for each node in the tree.
+
+  ## Example
+  NaryTree.print_tree tree, fn(node) -> "#{x.name} : {x.content}" end
+  
+  """
   def print_tree(%__MODULE__{} = tree, func \\ fn(x) -> "#{x.name}" end) do
     do_print_tree(%Node{} = tree.nodes[tree.root], tree.nodes, func)
   end
@@ -430,7 +447,7 @@ defmodule NaryTree do
     Enum.each children, fn(child_id) -> do_print_tree(nodes[child_id], nodes, func) end
   end
 
-  def indent(n, c \\ " ") do
+  defp indent(n, c \\ " ") do
     String.duplicate(c, n*2)
   end
 
@@ -461,6 +478,10 @@ defmodule NaryTree do
     end
   end
 
+  @doc """
+  Collects nodes of a tree by using depth-first traversal. Returns a list of NaryTree.Node structs
+
+  """
   def to_list(%__MODULE__{nodes: nodes} = tree) do
     traverse(%Node{} = tree.nodes[tree.root], nodes, [])
     |> :lists.reverse()
@@ -476,6 +497,70 @@ defmodule NaryTree do
     end
   end
 
+  @doc """
+  Converts a tree into a hierarchical map with children nodes embedded in an array.
+  
+  This is a convenience form if you want to convert the tree into JSON format using 
+  Poison library, for example.
+
+  Takes tree as argument, and an optional function. The function takes a node parameter
+  and should return a map of attributes.
+  
+  The default function returns
+    %{id: node.id, name: node.name, content: node.content, level: node.level, parent: node.parent}
+
+  ## Example
+      iex> tree = NaryTree.new(NaryTree.Node.new("Root")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("Leaf 1")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("Leaf 2")) |>
+      ...>   NaryTree.to_map( &(%{key: &1.name}) )
+      %{children: [%{key: "Leaf 1"}, %{key: "Leaf 2"}], key: "Root"}
+  """
+  def to_map(%__MODULE__{nodes: nodes} = tree, func \\ &attr/1) do
+    node_to_map(%Node{} = nodes[tree.root], tree, func)
+  end
+
+  defp node_to_map(%Node{children: children} = node, _tree, func) when children == [] do
+    func.(node)
+  end
+  defp node_to_map(%Node{} = node, tree, func) do
+    func.(node)
+    |> Map.put(:children, Enum.reduce(node.children, [], fn(child_id, accumulator) ->
+          [node_to_map(__MODULE__.get(tree, child_id), tree, func) | accumulator]
+        end) |> :lists.reverse()
+      )
+  end
+
+  defp attr(node) do
+    %{id: node.id, name: node.name, content: node.content, level: node.level, parent: node.parent}
+  end
+
+  @doc """
+  Converts a map into a tree
+
+  """
+  def from_map(%{name: name, content: content} = map), do: tree_from_map map, new(Node.new(name, content)) 
+  def from_map(%{name: name} = map), do: tree_from_map map, new(Node.new(name))
+
+  defp tree_from_map(%{children: children}, tree) do
+    Enum.reduce children, tree, fn(child, tree) -> tree_from_map(child, tree.root, tree) end
+  end
+  defp tree_from_map(%{}, tree), do: tree
+
+  defp tree_from_map(%{children: children} = map, id, acc) do
+    node = if Map.has_key?(map, :content), do: Node.new(map.name, map.content), else: Node.new(map.name)
+    t = add_child(acc, node, id)
+    Enum.reduce children, t, fn(child, tree) -> tree_from_map(child, node.id, tree) end
+  end
+  defp tree_from_map(%{} = map, id, acc) do
+    node = if Map.has_key?(map, :content), do: Node.new(map.name, map.content), else: Node.new(map.name)
+    add_child(acc, node, id)
+  end
+
+  @doc """
+  Converts a list of nodes back into nodes map %{node1id => %NaryTree.Node{}, node2id => ...}
+
+  """
   def list_to_nodes(list) when is_list(list) do
     Enum.reduce list, %{}, fn(node, acc) ->
       Map.put_new(acc, node.id, node)
