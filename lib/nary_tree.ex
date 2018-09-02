@@ -1,4 +1,12 @@
 defmodule NaryTree do
+  @moduledoc """
+  ## NaryTree
+
+  NaryTree implements a data structure for an n-ary tree in which each node has zero or more children. 
+  A node in a tree can have arbitrary number of children and depth.
+  
+  Trees are unbalanced and children unordered.
+  """
   defstruct root: nil, nodes: %{}
 
   defmodule Node do
