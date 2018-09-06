@@ -1,4 +1,5 @@
 defmodule NaryTree do
+
   @moduledoc """
   ## NaryTree
 
@@ -7,44 +8,8 @@ defmodule NaryTree do
   
   Trees are unbalanced and children unordered.
   """
+
   defstruct root: nil, nodes: %{}
-
-  defmodule Node do
-    @enforce_keys [:id]
-    defstruct id: :empty, name: :empty, content: :empty, parent: :empty, level: 0, children: []
-
-    @type t :: %__MODULE__{id: String.t, name: String.t, content: any(), parent: String.t, children: []}
-
-    @doc ~S"""
-    Create a new, empty node.
-    """
-    @spec new() :: __MODULE__.t()
-    def new(), do: %__MODULE__{id: create_id(), name: :empty, content: :empty, parent: :empty, children: []}
-
-    @doc ~S"""
-    Create a new, empty node with name.
-
-    ## Example
-        iex> %NaryTree.Node{name: name, level: 0, children: []} = NaryTree.Node.new("Node")
-        iex> name
-        "Node"
-    """
-    def new(name), do: %__MODULE__{id: create_id(), name: name, content: :empty, parent: :empty, children: []}
-
-    @doc ~S"""
-    Create a new, empty node with name and content.
-
-    ## Example
-        iex> %NaryTree.Node{name: name, content: content, level: 0, children: []} = NaryTree.Node.new("Root", %{w: 100})
-        iex> name
-        "Root"
-        iex> content
-        %{w: 100}
-    """
-    def new(name, content), do: %__MODULE__{id: create_id(), name: name, content: content, parent: :empty, children: []}
-
-    defp create_id, do: Integer.to_string(:rand.uniform(4294967296), 32)
-  end
 
   alias NaryTree.Node
 
@@ -58,7 +23,7 @@ defmodule NaryTree do
       %NaryTree{nodes: %{}, root: nil}
   """
   @spec new() :: __MODULE__.t()
-  def new(), do: %__MODULE__{}
+  def new(), do: %__MODULE__{root: :empty}
 
   @doc ~S"""
   Create a new tree with a root node.
@@ -78,8 +43,8 @@ defmodule NaryTree do
   Add a child node to a tree root node. Returns an updated tree with added child.
 
           RootNode
-           \
-           ChildNode
+          \
+          ChildNode
 
   ## Example
       iex> tree = NaryTree.new(NaryTree.Node.new "Root node") |>
@@ -98,8 +63,8 @@ defmodule NaryTree do
   Add a child node to the specified tree node. Returns an updated tree with added child.
 
         RootNode
-           \
-           BranchNode
+          \
+          BranchNode
               \
               New node
 
@@ -428,7 +393,7 @@ defmodule NaryTree do
   
   """
   def siblings(%Node{} = node, %__MODULE__{} = tree) do
-   parent(node, tree)
+  parent(node, tree)
     |> children(tree)
     |> List.delete(node)
   end
@@ -619,6 +584,7 @@ defmodule NaryTree do
       {:error, NaryTree}        # let the default action take over
     end
   end
+
 end
 
 # alias NaryTree, as: NT
