@@ -587,25 +587,3 @@ defmodule NaryTree do
 
 end
 
-# alias NaryTree, as: NT
-# alias NaryTree.Node, as: N
-# root = N.new "Goal", %{w: 0.45}
-# c1 = N.new "Cost", %{w: 0.33}
-# c2 = N.new "Benefits", %{w: 0.67}
-# a1 = N.new "Alt 1", %{w: 0.1}
-# a2 = N.new "Alt 2", %{w: 0.4}
-# a3 = N.new "Alt 3", %{w: 0.5}
-# c11 = N.new "Speed", %{w: 0.2}
-# c12 = N.new "Image", %{w: 0.3}
-# c13 = N.new "Features", %{w: 0.5}
-
-# tree = NT.new(root) |>
-#   NT.add_child(c2, root.id) |>
-#   NT.add_child(c1, root.id) |>
-#   NT.add_child(a1, c1.id) |>
-#   NT.add_child(a2, c1.id) |>
-#   NT.add_child(a3, c1.id) |>
-#   NT.add_child(c11, c2.id) |>
-#   NT.add_child(c12, c2.id) |>
-#   NT.add_child(c13, c2.id)
-

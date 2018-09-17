@@ -2,14 +2,18 @@ defmodule NaryTree.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :nary_tree,
-     version: "0.1.0",
-     elixir: "~> 1.4",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     description: description(),
-     package: package(),
-     deps: deps()]
+    [
+      app: :nary_tree,
+      version: "0.1.0",
+      elixir: "~> 1.4",
+      build_embedded: Mix.env == :prod,
+      start_permanent: Mix.env == :prod,
+      description: description(),
+      package: package(),
+      deps: deps(),
+      name: "NaryTree",
+      source_url: "https://github.com/medhiwidjaja/nary_tree"
+    ]
   end
 
   def application do
@@ -39,7 +43,7 @@ defmodule NaryTree.Mixfile do
       licenses: ["MIT"],
       maintainers: ["Medhi Widjaja"],
       links: %{
-        "Bitbucket" => "https://bitbucket.org/medhiwidjaja/nary_tree",
+        "Github" => "https://github.com/medhiwidjaja/nary_tree",
       }
     ]
   end
