@@ -10,4 +10,6 @@ The library implements Enumerable protocol to allow access to the tree using sta
 
 NaryTree supports importing from, and exporting to Map.
 
-This is a MIT licensed open source project, and is hosted at github.com/medhiwidjaja/nary_tree, and is available as a standard Hex package from hex.pm.
+This is a MIT licensed open source project, and is hosted at github.com/medhiwidjaja/nary_tree, and is available as a standard Hex package from [hex.pm](https://hex.pm/packages/nary_tree).
+
+View documentation at [hexdocs.pm](https://hexdocs.pm/nary_tree/)
