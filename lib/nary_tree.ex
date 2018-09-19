@@ -146,7 +146,7 @@ defmodule NaryTree do
 
   @doc ~S"""
   Enumerates tree nodes, and applies function to each leaf nodes' content.
-  Similar to update_content/2, but applies only to leaf nodes.
+  Similar to `update_content/2`, but applies only to leaf nodes.
 
   """
   @spec each_leaf(__MODULE__.t(), function()) :: __MODULE__.t()
@@ -474,7 +474,7 @@ defmodule NaryTree do
   end
 
   @doc """
-  Collects nodes of a tree by using depth-first traversal. Returns a list of NaryTree.Node structs
+  Collects nodes of a tree by using depth-first traversal. Returns a list of `NaryTree.Node` structs
 
   """
   def to_list(%__MODULE__{nodes: nodes} = tree) do
@@ -499,7 +499,7 @@ defmodule NaryTree do
   and should return a map of attributes.
   
   The default function returns
-    %{id: node.id, name: node.name, content: node.content, level: node.level, parent: node.parent}
+    `%{id: node.id, name: node.name, content: node.content, level: node.level, parent: node.parent}`
 
   ## Example
       iex> tree = NaryTree.new(NaryTree.Node.new("Root")) |>
@@ -554,7 +554,7 @@ defmodule NaryTree do
   end
 
   @doc """
-  Converts a list of nodes back into nodes map %{node1id => %NaryTree.Node{}, node2id => ...}
+  Converts a list of nodes back into nodes map `%{node1id => %NaryTree.Node{}, node2id => ...}`
 
   """
   def list_to_nodes(list) when is_list(list) do
