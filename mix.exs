@@ -32,8 +32,7 @@ defmodule NaryTree.Mixfile do
     [
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:credo, "~> 0.8.2", only: [:dev, :test]},
-      {:dialyxir, "~> 0.5.0", only: [:dev, :test]},
-      {:poison, "~> 3.1"}
+      {:dialyxir, "~> 0.5.0", only: [:dev, :test]}
     ]
   end
 
