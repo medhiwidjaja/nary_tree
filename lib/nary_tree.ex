@@ -1,12 +1,8 @@
 defmodule NaryTree do
 
   @moduledoc """
-  ## NaryTree
-
   NaryTree implements a data structure for an n-ary tree in which each node has zero or more children. 
-  A node in a tree can have arbitrary number of children and depth.
-  
-  Trees are unbalanced and children unordered.
+  A node in a tree can have arbitrary number of children and depth. Trees are unbalanced and children unordered.
   """
 
   defstruct root: nil, nodes: %{}
@@ -20,7 +16,7 @@ defmodule NaryTree do
 
   ## Example
       iex> NaryTree.new()
-      %NaryTree{nodes: %{}, root: nil}
+      %NaryTree{nodes: %{}, root: :empty}
   """
   @spec new() :: __MODULE__.t()
   def new(), do: %__MODULE__{root: :empty}
@@ -236,7 +232,9 @@ defmodule NaryTree do
   @doc ~S"""
   Delete a node in a tree.
   If the deleted node has children, the children will be moved up in hierarchy
-  to become the children of the deleted node's parent.
+  to become the children of the deleted node's parent. 
+
+  Deleting root node results in `:error`
 
   ## Example
       iex> branch = NaryTree.Node.new("Branch Node")
@@ -252,6 +250,7 @@ defmodule NaryTree do
   """
   @spec delete(NaryTree.t(), any()) :: :error
   def delete(%__MODULE__{} = tree, %Node{id: id}), do: delete(tree, id)
+  def delete(%__MODULE__{root: root}, id) when id == root, do: :error
   def delete(%__MODULE__{nodes: nodes} = tree, id) do
     if Enum.member? tree, id do
       node = nodes[id]
@@ -318,7 +317,7 @@ defmodule NaryTree do
 
   @doc ~S"""
   Merges a tree into another tree at the specified node point.
-  Returns the resulting combined tree or :error if the specified
+  Returns the resulting combined tree or `:error` if the specified
   node point doesn't exist.
 
   ## Example
@@ -374,7 +373,7 @@ defmodule NaryTree do
   end
 
   @doc ~S"""
-  Returns the parent node of a tree, or :empty if there is none
+  Returns the parent node of a tree, or `:empty` if there is none
 
   ## Example
       iex> branch = NaryTree.Node.new("Branch Node")
@@ -401,10 +400,14 @@ defmodule NaryTree do
   @doc ~S"""
   Prints a tree in hierarchical fashion. 
   The second parameter is an optional function that accepts a node as a parameter.
-  print_tree will output the return value of the function for each node in the tree.
+  `print_tree` will output the return value of the function for each node in the tree.
 
   ## Example
-  NaryTree.print_tree tree, fn(node) -> "#{x.name} : {x.content}" end
+    `iex> NaryTree.print_tree tree, fn(node) -> "#{x.name} : {x.content}" end`
+
+    or 
+
+    `iex> NaryTree.print_tree tree, &("#{&1.name}: #{&1.id}")`
   
   """
   def print_tree(%__MODULE__{} = tree, func \\ fn(x) -> "#{x.name}" end) do
@@ -431,6 +434,18 @@ defmodule NaryTree do
     if Map.has_key?(nodes, id), do: {:ok, nodes[id]}, else: :error
   end
 
+  @doc ~S"""
+  Invoked in order to access a node in a tree and update it at the same time
+
+  ## Example 
+      iex> tree = NaryTree.new NaryTree.Node.new "Root"
+      iex> {old_node, new_tree} = NaryTree.get_and_update tree, tree.root, &({&1, %NaryTree.Node{&1 | content: :not_empty}})
+      iex> old_node.content
+      :empty
+      iex> NaryTree.root(new_tree).content
+      :not_empty
+    
+  """
   def get_and_update(%__MODULE__{} = tree, id, fun) when is_function(fun, 1) do
     current = get(tree, id)
     case fun.(current) do
@@ -443,11 +458,18 @@ defmodule NaryTree do
     end
   end
 
-  def pop(tree, id, default \\ nil) do
+  @doc ~S"""
+  Invoked to “pop” the specified node from the tree.
+
+  When key exists in the tree, it returns a `{a_node, new_tree}` tuple where `a_node` is the node that was under key and `new_tree` is the tree without `a_node`.
+
+  When key is not present in the tree, it returns `{nil, tree}`.
+  """
+  def pop(tree, id) do
     case delete(tree, id) do
       %__MODULE__{} = new_tree ->
         {get(tree, id), new_tree}
-      :error -> {default, tree}
+      :error -> {nil, tree}
     end
   end
 
@@ -473,9 +495,6 @@ defmodule NaryTree do
   @doc """
   Converts a tree into a hierarchical map with children nodes embedded in an array.
   
-  This is a convenience form if you want to convert the tree into JSON format using 
-  Poison library, for example.
-
   Takes tree as argument, and an optional function. The function takes a node parameter
   and should return a map of attributes.
   
@@ -511,6 +530,10 @@ defmodule NaryTree do
   @doc """
   Converts a map into a tree
 
+  ## Example:
+    iex> tree = NaryTree.from_map %{name: "Root", children: [%{name: "Left"}, %{name: "Right"}]}
+    iex> Enum.count tree
+    3
   """
   def from_map(%{name: name, content: content} = map), do: tree_from_map map, new(Node.new(name, content)) 
   def from_map(%{name: name} = map), do: tree_from_map map, new(Node.new(name))
