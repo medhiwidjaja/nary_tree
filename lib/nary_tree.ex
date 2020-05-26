@@ -564,7 +564,7 @@ defmodule NaryTree do
   end
 
   defimpl Enumerable do
-    def count(%NaryTree{nodes: nodes}), do: {:ok, Map.size(nodes)}
+    def count(%NaryTree{nodes: nodes}), do: {:ok, Kernel.map_size(nodes)}
 
     @doc """
     ## TODO
