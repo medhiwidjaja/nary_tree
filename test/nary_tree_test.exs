@@ -3,20 +3,20 @@ defmodule NaryTreeTest do
   doctest NaryTree
 
   setup_all do
-    branch1 = NaryTree.Node.new("Branch node 1")
-    branch2 = NaryTree.Node.new("Branch node 2")
-    leaf1 = NaryTree.Node.new("Leaf node 1")
-    leaf2 = NaryTree.Node.new("Leaf node 2")
-    complex_tree = NaryTree.new(NaryTree.Node.new("Root node"))
+    branch1 = NaryTree.Node.new(1, "Branch node 1")
+    branch2 = NaryTree.Node.new(2, "Branch node 2")
+    leaf1 = NaryTree.Node.new(3, "Leaf node 1")
+    leaf2 = NaryTree.Node.new(4, "Leaf node 2")
+    complex_tree = (NaryTree.new(NaryTree.Node.new(5, "Root node"))
       |> NaryTree.add_child(branch1)
       |> NaryTree.add_child(branch2)
       |> NaryTree.add_child(leaf1, branch1.id)
-      |> NaryTree.add_child(leaf2, branch1.id)
+      |> NaryTree.add_child(leaf2, branch1.id))
 
     [
-      simple_tree: NaryTree.new(NaryTree.Node.new("Root node"))
-        |> NaryTree.add_child(NaryTree.Node.new("Leaf node 1"))
-        |> NaryTree.add_child(NaryTree.Node.new("Leaf node 2")),
+      simple_tree: NaryTree.new(NaryTree.Node.new(6, "Root node"))
+        |> NaryTree.add_child(NaryTree.Node.new(7, "Leaf node 1"))
+        |> NaryTree.add_child(NaryTree.Node.new(8, "Leaf node 2")),
 
       big_tree: complex_tree,
       branch1: branch1,
