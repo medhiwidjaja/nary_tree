@@ -25,7 +25,7 @@ defmodule NaryTree do
   Create a new tree with a root node.
 
   ## Example
-      iex> %NaryTree{root: key, nodes: nodes} = NaryTree.new(NaryTree.Node.new(1, "Root node"))
+      iex> %NaryTree{root: key, nodes: nodes} = NaryTree.new(NaryTree.Node.new("1", "Root node"))
       iex> nodes[key].name
       "Root node"
   """
@@ -43,8 +43,8 @@ defmodule NaryTree do
           ChildNode
 
   ## Example
-      iex> tree = NaryTree.new(NaryTree.Node.new(1, "Root node")) |>
-      ...>   NaryTree.add_child(NaryTree.Node.new(2, "Child"))
+      iex> tree = NaryTree.new(NaryTree.Node.new("1", "Root node")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("2", "Child"))
       iex> %NaryTree{root: key, nodes: nodes} = tree
       iex> [child_id | _] = nodes[key].children
       iex> nodes[child_id].name
@@ -65,16 +65,16 @@ defmodule NaryTree do
               New node
 
   ## Example
-      iex> branch = NaryTree.Node.new(3, "Branch Node")
-      iex> tree = NaryTree.new(NaryTree.Node.new(1, "Root Node")) |>
+      iex> branch = NaryTree.Node.new("3", "Branch Node")
+      iex> tree = NaryTree.new(NaryTree.Node.new("1", "Root Node")) |>
       ...>   NaryTree.add_child(branch) |>
-      ...>   NaryTree.add_child(NaryTree.Node.new(4, "New node"), branch.id)
+      ...>   NaryTree.add_child(NaryTree.Node.new("4", "New node"), branch.id)
       iex> Enum.count tree.nodes
       3
   """
-  def add_child(_, %Node{id: child_id}, parent_id) when parent_id == child_id do
-    raise "Cannot add child to its own node"
-  end
+  # def add_child(_, %Node{id: child_id}, parent_id) when parent_id == child_id do
+  #   raise "Cannot add child to its own node"
+  # end
   def add_child(%__MODULE__{nodes: nodes} = tree, %Node{id: child_id} = child, parent_id) do
     parent = tree.nodes[parent_id]
     updated_nodes = nodes
@@ -87,7 +87,7 @@ defmodule NaryTree do
   Check whether a node is a root node.
 
   ## Example
-      iex> node = NaryTree.Node.new(1, "Root node")
+      iex> node = NaryTree.Node.new("1", "Root node")
       iex> NaryTree.is_root? node
       true
   """
@@ -98,8 +98,8 @@ defmodule NaryTree do
   Check whether a node is a leaf node.
 
   ## Example
-      iex> tree = NaryTree.new(NaryTree.Node.new(1, "Root node")) |>
-      ...>   NaryTree.add_child(NaryTree.Node.new(2, "Leaf node"))
+      iex> tree = NaryTree.new(NaryTree.Node.new("1", "Root node")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("2", "Leaf node"))
       iex> [node_id] = tree.nodes[tree.root].children
       iex> leaf_node = tree.nodes[node_id]
       iex> NaryTree.is_leaf? leaf_node
@@ -112,7 +112,7 @@ defmodule NaryTree do
   Check whether a node has non-empty content.
 
   ## Example
-      iex> node = NaryTree.Node.new(1, "Node", content: %{c: "Content"})
+      iex> node = NaryTree.Node.new("1", "Node", content: %{c: "Content"})
       iex> NaryTree.has_content? node
       true
   """
@@ -124,9 +124,9 @@ defmodule NaryTree do
   Returns updated tree, with new content for every nodes
 
   ## Example
-      iex> tree = NaryTree.new(NaryTree.Node.new(1, "Root node")) |>
-      ...>   NaryTree.add_child(NaryTree.Node.new(2, "Leaf node 1")) |>
-      ...>   NaryTree.add_child(NaryTree.Node.new(3, "Leaf node 2"))
+      iex> tree = NaryTree.new(NaryTree.Node.new("1", "Root node")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("2", "Leaf node 1")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("3", "Leaf node 2"))
       iex> Enum.map tree.nodes, fn({_,node}) -> node.content end
       [:empty, :empty, :empty]
       iex> NaryTree.update_content(tree, fn(_) -> %{x: 4} end) |>
@@ -168,7 +168,7 @@ defmodule NaryTree do
   Check whether the argument is of NaryTree type.
 
   ## Example
-      iex> NaryTree.is_nary_tree? NaryTree.new(NaryTree.Node.new(1, "Node"))
+      iex> NaryTree.is_nary_tree? NaryTree.new(NaryTree.Node.new("1", "Node"))
       true
   """
   @spec is_nary_tree?(__MODULE__.t()) :: boolean()
@@ -201,13 +201,14 @@ defmodule NaryTree do
   Get the node with the specified id from the tree.
 
   ## Example
-      iex> node = NaryTree.Node.new(1, "Node")
+      iex> node = NaryTree.Node.new("1", "Node")
       iex> n = NaryTree.new(node) |>
       ...>     NaryTree.get(node.id)
       iex> n.name
       "Node"
   """
   def get(%__MODULE__{nodes: nodes}, id), do: Map.get nodes, id
+  
 
   @doc ~S"""
   Put a node into the tree at the specified id.
@@ -217,10 +218,10 @@ defmodule NaryTree do
   the hierarchy structure remains the same.
 
   ## Example
-      iex> tree = NaryTree.new NaryTree.Node.new(1, "Root")
+      iex> tree = NaryTree.new NaryTree.Node.new("1", "Root")
       iex> tree.nodes[tree.root].name
       "Root"
-      iex> tree = NaryTree.put(tree, tree.root, NaryTree.Node.new(2, "Node"))
+      iex> tree = NaryTree.put(tree, tree.root, NaryTree.Node.new("2", "Node"))
       iex> tree.nodes[tree.root].name
       "Node"
   """
@@ -237,9 +238,9 @@ defmodule NaryTree do
   Deleting root node results in `:error`
 
   ## Example
-      iex> branch = NaryTree.Node.new(1, "Branch Node")
-      iex> leaf = NaryTree.Node.new(2, "Leaf")
-      iex> tree = NaryTree.new(NaryTree.Node.new(3, "Root Node")) |>
+      iex> branch = NaryTree.Node.new("1", "Branch Node")
+      iex> leaf = NaryTree.Node.new("2", "Leaf")
+      iex> tree = NaryTree.new(NaryTree.Node.new("3", "Root Node")) |>
       ...>   NaryTree.add_child(branch) |>
       ...>   NaryTree.add_child(leaf, branch.id) |>
       ...>   NaryTree.delete(branch.id)
@@ -279,9 +280,9 @@ defmodule NaryTree do
   descendents as a new tree struct.
 
   ## Example
-      iex> branch = NaryTree.Node.new(1, "Branch Node")
-      iex> leaf = NaryTree.Node.new(2, "Leaf")
-      iex> tree = NaryTree.new(NaryTree.Node.new(3, "Root Node")) |>
+      iex> branch = NaryTree.Node.new("1", "Branch Node")
+      iex> leaf = NaryTree.Node.new("2", "Leaf")
+      iex> tree = NaryTree.new(NaryTree.Node.new("3", "Root Node")) |>
       ...>   NaryTree.add_child(branch) |>
       ...>   NaryTree.add_child(leaf, branch.id)
       iex> detached = NaryTree.detach(tree, branch.id)
@@ -290,7 +291,7 @@ defmodule NaryTree do
       iex> detached.root
       branch.id
   """
-  def detach(%__MODULE__{} = tree, node_id) when is_binary(node_id) or is_number(node_id) do
+  def detach(%__MODULE__{} = tree, node_id) when is_binary(node_id) do
     if Enum.member? tree, node_id do
       root = get(tree, node_id)
       new_tree = new root
@@ -321,11 +322,11 @@ defmodule NaryTree do
   node point doesn't exist.
 
   ## Example
-      iex> branch = NaryTree.Node.new(1, "Branch Node")
-      iex> tree1 = NaryTree.new(NaryTree.Node.new(2, "Root Node")) |>
+      iex> branch = NaryTree.Node.new("1", "Branch Node")
+      iex> tree1 = NaryTree.new(NaryTree.Node.new("2", "Root Node")) |>
       ...>   NaryTree.add_child(branch)
-      iex> tree2 = NaryTree.new(NaryTree.Node.new(3, "Subtree")) |>
-      ...>   NaryTree.add_child(NaryTree.Node.new(4, "Leaf"))
+      iex> tree2 = NaryTree.new(NaryTree.Node.new("3", "Subtree")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("4", "Leaf"))
       iex> combined = NaryTree.merge(tree1, tree2, branch.id)
       iex> Enum.count combined.nodes
       4
@@ -333,7 +334,7 @@ defmodule NaryTree do
   def merge(%__MODULE__{} = tree,
             %__MODULE__{} = branch,
             node_id)
-            when is_binary(node_id) or is_number(node_id) do
+            when is_binary(node_id) do
     if Enum.member? tree, node_id do
       node = get(tree, node_id)
       updated_node = node |> Map.put(:children, node.children ++ [branch.root])
@@ -355,7 +356,7 @@ defmodule NaryTree do
   Returns the root node of a tree.
 
   ## Example
-      iex> tree = NaryTree.new(NaryTree.Node.new(1, "Root Node"))
+      iex> tree = NaryTree.new(NaryTree.Node.new("1", "Root Node"))
       iex> %NaryTree.Node{name: name} = NaryTree.root(tree)
       iex> name
       "Root Node"
@@ -376,8 +377,8 @@ defmodule NaryTree do
   Returns the parent node of a tree, or `:empty` if there is none
 
   ## Example
-      iex> branch = NaryTree.Node.new(1, "Branch Node")
-      iex> tree = NaryTree.new(NaryTree.Node.new(2, "Root Node")) |>
+      iex> branch = NaryTree.Node.new("1", "Branch Node")
+      iex> tree = NaryTree.new(NaryTree.Node.new("2", "Root Node")) |>
       ...>   NaryTree.add_child(branch)
       iex> %NaryTree.Node{name: name} = NaryTree.root(tree)
       iex> name
@@ -438,7 +439,7 @@ defmodule NaryTree do
   Invoked in order to access a node in a tree and update it at the same time
 
   ## Example 
-      iex> tree = NaryTree.new NaryTree.Node.new(1, "Root")
+      iex> tree = NaryTree.new NaryTree.Node.new("1", "Root")
       iex> {old_node, new_tree} = NaryTree.get_and_update tree, tree.root, &({&1, %NaryTree.Node{&1 | content: :not_empty}})
       iex> old_node.content
       :empty
@@ -502,9 +503,9 @@ defmodule NaryTree do
     `%{id: node.id, name: node.name, content: node.content, level: node.level, parent: node.parent}`
 
   ## Example
-      iex> tree = NaryTree.new(NaryTree.Node.new(1, "Root")) |>
-      ...>   NaryTree.add_child(NaryTree.Node.new(2, "Leaf 1")) |>
-      ...>   NaryTree.add_child(NaryTree.Node.new(3, "Leaf 2")) |>
+      iex> tree = NaryTree.new(NaryTree.Node.new("1", "Root")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("2", "Leaf 1")) |>
+      ...>   NaryTree.add_child(NaryTree.Node.new("3", "Leaf 2")) |>
       ...>   NaryTree.to_map( &(%{key: &1.name}) )
       %{children: [%{key: "Leaf 1"}, %{key: "Leaf 2"}], key: "Root"}
   """
@@ -573,8 +574,8 @@ defmodule NaryTree do
     @doc """
     ## TODO
     ## Examples
-        iex> r = NaryTree.new NaryTree.Node.new(1, "Root", 3)
-        ...> n = NaryTree.Node.new(2, "Branch", 100)
+        iex> r = NaryTree.new NaryTree.Node.new("1", "Root", 3)
+        ...> n = NaryTree.Node.new("2", "Branch", 100)
         ...> NaryTree.add_child r, n
         ...> Enum.member? r, n.id
         true

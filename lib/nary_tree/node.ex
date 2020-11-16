@@ -15,7 +15,7 @@ defmodule NaryTree.Node do
     @doc ~S"""
     Create a new, empty node.
     """
-    @spec new(Integer.t()) :: __MODULE__.t()
+    @spec new(String.t()) :: __MODULE__.t()
     def new(id), do: %__MODULE__{id: create_id(id), name: :empty, content: :empty, parent: :empty, children: []}
   
     @doc ~S"""
