@@ -112,7 +112,7 @@ defmodule NaryTree do
   Check whether a node has non-empty content.
 
   ## Example
-      iex> node = NaryTree.Node.new("1", "Node", content: %{c: "Content"})
+      iex> node = NaryTree.Node.new("1", "Node", "DemoType", content: %{c: "Content"})
       iex> NaryTree.has_content? node
       true
   """
@@ -208,7 +208,7 @@ defmodule NaryTree do
       "Node"
   """
   def get(%__MODULE__{nodes: nodes}, id), do: Map.get nodes, id
-  
+
 
   @doc ~S"""
   Put a node into the tree at the specified id.
@@ -536,11 +536,14 @@ defmodule NaryTree do
     iex> Enum.count tree
     3
   """
-  def from_map(%{id: id, name: name, content: content} = map) do
-    tree_from_map map, new(Node.new(id, name, content)) 
-  end
   def from_map(%{id: id, name: name} = map) do
     tree_from_map map, new(Node.new(id, name))
+  end
+  def from_map(%{id: id, name: name, type: type} = map) do
+    tree_from_map map, new(Node.new(id, name, type))
+  end
+  def from_map(%{id: id, name: name, type: type, content: content} = map) do
+    tree_from_map map, new(Node.new(id, name, type, content))
   end
 
   defp tree_from_map(%{children: children}, tree) do
@@ -549,12 +552,26 @@ defmodule NaryTree do
   defp tree_from_map(%{}, tree), do: tree
 
   defp tree_from_map(%{children: children} = map, id, acc) do
-    node = if Map.has_key?(map, :content), do: Node.new(map[:id], map.name, map.content), else: Node.new(map[:id], map.name)
+    node = case map do
+      %{id: id, type: type, content: content, name: name} ->
+        Node.new(id, name, type, content)
+      %{id: id, type: type,  name: name} ->
+        Node.new(id, name, type)
+      _ ->
+        Node.new(map[:id], map.name)
+    end
     t = add_child(acc, node, id)
     Enum.reduce children, t, fn(child, tree) -> tree_from_map(child, node.id, tree) end
   end
   defp tree_from_map(%{} = map, id, acc) do
-    node = if Map.has_key?(map, :content), do: Node.new(map[:id], map.name, map.content), else: Node.new(map[:id], map.name)
+    node = case map do
+      %{id: id, type: type, content: content, name: name} ->
+        Node.new(id, name, type, content)
+      %{id: id, type: type,  name: name} ->
+        Node.new(id, name, type)
+      _ ->
+        Node.new(map[:id], map.name)
+    end
     add_child(acc, node, id)
   end
 
